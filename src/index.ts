@@ -1,30 +1,8 @@
-import {
-  ADDON_ID,
-  ADDON_VERSION,
-  CACHE_SCHEMA,
-  DEFAULT_JOURNALS_JSON,
-  LEGACY_PREF_BRANCH,
-  PREF_BRANCH,
-  PREF_DEFAULTS,
-  UI_STRINGS,
-} from './config';
+import { ADDON_ID, ADDON_VERSION, CACHE_SCHEMA, DEFAULT_JOURNALS_JSON, LEGACY_PREF_BRANCH, PREF_BRANCH, PREF_DEFAULTS, UI_STRINGS } from './config';
 import { FeedCoordinator } from './host/feedCoordinator';
-import {
-  applyPresetPack,
-  backfillSubscriptions,
-  mergeSubscriptions,
-  parseSubscriptionsImport,
-} from './host/subscriptions';
+import { applyPresetPack, backfillSubscriptions, exportSubscriptionsWithPicker, mergeSubscriptions, parseSubscriptionsImport } from './host/subscriptions';
 import { WindowHostManager } from './host/windowManager';
-import {
-  addToZoteroByDOI,
-  getExistingLibraryDOIs,
-  getUserCollections,
-  importArticleToZotero,
-  openExternalURL,
-  openPreferencesPane,
-  selectLibraryItem,
-} from './host/zoteroImport';
+import { addToZoteroByDOI, getExistingLibraryDOIs, getUserCollections, importArticleToZotero, openExternalURL, openPreferencesPane, selectLibraryItem } from './host/zoteroImport';
 import { DailyFeedCacheStore, localDateKey } from './services/cache';
 import { getJournalByISSN, searchJournals } from './services/crossref';
 import { getVisualSourcePages } from './services/enrichment';
@@ -33,19 +11,7 @@ import { dedupeArticles } from './services/filtering';
 import { httpGetHTML, httpGetText } from './services/http';
 import { ReadingStateStore, articleStateKey } from './services/readingState';
 import { getTranslationTarget as computeTarget, translateText as runTranslate } from './services/translation';
-import type {
-  ArticleTranslation,
-  JournalArticle,
-  JournalFlowService,
-  JournalSubscription,
-  PresetPackId,
-  TranslateProvider,
-  UILanguage,
-  UILanguageMode,
-  WindowOpenMode,
-  WorkbenchLaunchState,
-  ZoteroCollectionSummary,
-} from './types';
+import type { ArticleTranslation, JournalArticle, JournalFlowService, JournalSubscription, PresetPackId, TranslateProvider, UILanguage, UILanguageMode, WindowOpenMode, WorkbenchLaunchState, ZoteroCollectionSummary } from './types';
 
 declare const Zotero: any;
 declare const addonId: string | undefined;
@@ -196,6 +162,10 @@ export class JournalFlowHost implements JournalFlowService {
     return JSON.stringify({ schema: 'journalflow-subscriptions-v1', journals: this.getJournals() }, null, 2);
   }
 
+  exportSubscriptionsToFile() {
+    return exportSubscriptionsWithPicker(this.exportSubscriptionsJSON(), this.getString('export-subs'));
+  }
+
   importSubscriptionsJSON(raw: string): JournalSubscription[] {
     const { next } = mergeSubscriptions(this.getJournals(), parseSubscriptionsImport(raw));
     this.saveJournals(next);
@@ -259,13 +229,13 @@ export class JournalFlowHost implements JournalFlowService {
   }
 
   translateText(text: string, target: UILanguage): Promise<string> {
-    const provider = String(this.getPref('translateProvider') || 'google') as TranslateProvider;
+    const provider = String(this.getPref('translateProvider') || 'pdftranslate') as TranslateProvider;
     const llmConfig = {
       endpoint: String(this.getPref('llmEndpoint') || ''),
       apiKey: String(this.getPref('llmApiKey') || ''),
       model: String(this.getPref('llmModel') || ''),
     };
-    return runTranslate(text, target, provider, (msg) => Zotero?.debug?.(msg), llmConfig);
+    return runTranslate(text, target, provider, (msg) => Zotero?.debug?.(msg), llmConfig, typeof Zotero !== 'undefined' ? Zotero : undefined);
   }
 
   addToZoteroByDOI(doi: string): Promise<unknown[]> {

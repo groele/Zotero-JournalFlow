@@ -1,4 +1,5 @@
-import { runWithConcurrency } from '../utils/concurrency';
+import { createSemaphore, runWithConcurrency } from '../utils/concurrency';
+import { parseEuropePMCFallbackFigures, parseFallbackVisuals } from '../services/figureFallback';
 import { parseEuropePMCFigures, parsePublisherVisuals } from '../services/figureParser';
 import {
   addFigure,
@@ -16,6 +17,8 @@ export interface CardElement extends HTMLDivElement {
   _figuresEl?: HTMLDivElement;
   _figuresRequested?: boolean;
 }
+
+const figureFetchGate = createSemaphore(4);
 
 export function resetFigureObserver(
   doc: Document,
@@ -40,13 +43,13 @@ export function resetFigureObserver(
         }
       }
     },
-    { root, rootMargin: '300px' }
+    { root, rootMargin: '1000px 0px' }
   );
 }
 
 function probeImageURL(
   url: string,
-  timeout = 4500
+  timeout = 6000
 ): Promise<{ url: string; width: number; height: number } | null> {
   return new Promise((resolve) => {
     if (!isUsefulImageURL(url)) {
@@ -54,6 +57,9 @@ function probeImageURL(
       return;
     }
     const img = new Image();
+    if ('referrerPolicy' in img) {
+      img.referrerPolicy = 'no-referrer';
+    }
     let settled = false;
     const finish = (result: { url: string; width: number; height: number } | null) => {
       if (settled) return;
@@ -79,14 +85,14 @@ function figureImageLooksUsable(image: { width: number; height: number } | null)
   if (!image || !image.width || !image.height) return false;
   const maxEdge = Math.max(image.width, image.height);
   const minEdge = Math.min(image.width, image.height);
-  return maxEdge >= 320 && minEdge >= 110 && image.width * image.height >= 40000;
+  return maxEdge >= 160 && minEdge >= 64 && image.width * image.height >= 14000;
 }
 
 async function validateFigure(figure: ArticleFigure): Promise<ArticleFigure | null> {
   const clean = cleanFigure(figure);
   if (!clean) return null;
   let bestLoad: { url: string; width: number; height: number } | null = null;
-  for (const url of clean.urls) {
+  for (const url of clean.urls.slice(0, 6)) {
     const image = await probeImageURL(url);
     if (!image) continue;
     bestLoad = bestLoad || image;
@@ -116,12 +122,12 @@ async function validateFigure(figure: ArticleFigure): Promise<ArticleFigure | nu
   return null;
 }
 
-async function validateFigures(figures: ArticleFigure[], limit = 8): Promise<ArticleFigure[]> {
-  const candidates = dedupeFigures(figures).slice(0, Math.max(limit * 2, 16));
+async function validateFigures(figures: ArticleFigure[], limit = 10): Promise<ArticleFigure[]> {
+  const candidates = dedupeFigures(figures).slice(0, Math.max(limit * 2, 24));
   const validated = new Array<ArticleFigure | null>(candidates.length).fill(null);
   await runWithConcurrency(
     candidates.map((fig, index) => ({ fig, index })),
-    3,
+    4,
     async ({ fig, index }) => {
       validated[index] = await validateFigure(fig);
     }
@@ -148,7 +154,12 @@ async function fetchPublisherVisuals(ctx: FeedHostContext, article: JournalArtic
       for (const fig of parsed) {
         addFigure(figures, seen, fig);
       }
-      if (figures.length >= 24) break;
+      if (parsed.length < 2) {
+        for (const fb of parseFallbackVisuals(page.text, baseURL)) {
+          addFigure(figures, seen, fb);
+        }
+      }
+      if (figures.length >= 6) break;
     } catch (e) {
       ctx.Zotero?.debug?.(`[JournalFlow] publisher visuals failed for ${url}: ${e}`);
     }
@@ -159,6 +170,9 @@ async function fetchPublisherVisuals(ctx: FeedHostContext, article: JournalArtic
 function setImageWithFallback(doc: Document, parent: HTMLElement, figure: ArticleFigure): void {
   const img = doc.createElement('img');
   img.loading = 'lazy';
+  if ('referrerPolicy' in img) {
+    img.referrerPolicy = 'no-referrer';
+  }
   img.alt = figure.label || '';
   let idx = 0;
   img.addEventListener('error', () => {
@@ -191,54 +205,66 @@ export async function loadFiguresForCard(
   loading.textContent = getString(ctx, 'figures-loading');
   container.appendChild(loading);
 
-  try {
-    if (article.figures === null) {
-      let allFigures: ArticleFigure[] = [];
-      if (article.pmcid) {
-        try {
-          const xml = await ctx.JournalFlow.fetchFullTextXML(article.pmcid);
-          allFigures = parseEuropePMCFigures(xml, article.pmcid);
-        } catch (e) {
-          ctx.Zotero?.debug?.(`[JournalFlow] Europe PMC figures failed for ${article.pmcid}: ${e}`);
+  await figureFetchGate.run(async () => {
+    if (!card.isConnected) return;
+    try {
+      if (article.figures === null) {
+        let allFigures: ArticleFigure[] = [];
+        if (article.pmcid) {
+          try {
+            const xml = await ctx.JournalFlow.fetchFullTextXML(article.pmcid);
+            allFigures = parseEuropePMCFigures(xml, article.pmcid);
+            if (allFigures.length < 2) {
+              const fbSeen = createFigureSeen(allFigures);
+              for (const fb of parseEuropePMCFallbackFigures(xml, article.pmcid)) {
+                addFigure(allFigures, fbSeen, fb);
+              }
+            }
+          } catch (e) {
+            ctx.Zotero?.debug?.(`[JournalFlow] Europe PMC figures failed for ${article.pmcid}: ${e}`);
+          }
         }
-      }
-      if (article.url || article.doi || article.fullTextLinks?.length) {
-        const fallback = await fetchPublisherVisuals(ctx, article);
-        const seen = createFigureSeen(allFigures);
-        for (const fig of fallback) {
-          addFigure(allFigures, seen, fig);
+        if (
+          allFigures.length < 4 &&
+          (article.url || article.doi || article.fullTextLinks?.length)
+        ) {
+          const fallback = await fetchPublisherVisuals(ctx, article);
+          const seen = createFigureSeen(allFigures);
+          for (const fig of fallback) {
+            addFigure(allFigures, seen, fig);
+          }
         }
+        const combined: ArticleFigure[] = [];
+        const seen = createFigureSeen();
+        for (const fig of allFigures) {
+          addFigure(combined, seen, fig);
+        }
+        article.figures = combined;
+        article.graphicalAbstract = null;
       }
-      const combined: ArticleFigure[] = [];
-      const seen = createFigureSeen();
-      for (const fig of allFigures) {
-        addFigure(combined, seen, fig);
-      }
-      article.figures = combined;
-      article.graphicalAbstract = null;
+    } catch (e) {
+      ctx.Zotero?.debug?.(`[JournalFlow] figures failed for ${article.doi || article.url}: ${e}`);
+      article.figures = [];
     }
-  } catch (e) {
-    ctx.Zotero?.debug?.(`[JournalFlow] figures failed for ${article.doi || article.url}: ${e}`);
-    article.figures = [];
-  }
 
-  container.replaceChildren();
-  article.figures = await validateFigures(article.figures || [], 8);
-  if (!article.figures.length) {
-    container.hidden = true;
-    return;
-  }
+    container.replaceChildren();
+    article.figures = await validateFigures(article.figures || [], 10);
+    if (!article.figures.length) {
+      container.hidden = true;
+      return;
+    }
 
-  for (const [index, figure] of article.figures.slice(0, 8).entries()) {
-    const item = doc.createElement('div');
-    item.className = 'figure-item';
-    setImageWithFallback(doc, item, figure);
-    const label = doc.createElement('span');
-    label.className = 'fig-label';
-    label.textContent = figure.label || '';
-    label.title = figure.caption;
-    item.appendChild(label);
-    item.addEventListener('click', () => onOpenLightbox(article.figures || [], index));
-    container.appendChild(item);
-  }
+    for (const [index, figure] of article.figures.slice(0, 10).entries()) {
+      const item = doc.createElement('div');
+      item.className = 'figure-item';
+      setImageWithFallback(doc, item, figure);
+      const label = doc.createElement('span');
+      label.className = 'fig-label';
+      label.textContent = figure.label || '';
+      label.title = figure.caption;
+      item.appendChild(label);
+      item.addEventListener('click', () => onOpenLightbox(article.figures || [], index));
+      container.appendChild(item);
+    }
+  });
 }

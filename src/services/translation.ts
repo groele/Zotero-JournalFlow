@@ -1,6 +1,8 @@
 import type { TranslateProvider, UILanguage } from '../types';
 import { httpGetJSON, httpPostForm, httpPostJSON } from './http';
 
+declare const Zotero: any;
+
 export interface OpenAITranslateConfig {
   endpoint?: string;
   apiKey?: string;
@@ -116,12 +118,51 @@ async function translateViaOpenAI(
   return content.trim();
 }
 
+async function translateViaPDFTranslate(
+  text: string,
+  target: UILanguage,
+  src: UILanguage,
+  zotArg?: any
+): Promise<string> {
+  const zot =
+    zotArg?.PDFTranslate ? zotArg : typeof Zotero !== 'undefined' ? Zotero : (globalThis as any).Zotero;
+  const api = zot?.PDFTranslate?.api;
+  if (typeof api?.translate !== 'function') {
+    throw new Error('Zotero PDF Translate (windingwind/zotero-pdf-translate) is not installed or active');
+  }
+  const langTo = target === 'zh' ? 'zh-CN' : 'en';
+  const langFrom = src === 'zh' ? 'zh-CN' : 'en';
+  const extract = (res: any): string => {
+    const out = typeof res === 'string' ? res : res?.result ?? res?.text ?? '';
+    return typeof out === 'string' ? out.trim() : '';
+  };
+
+  let translated = '';
+  try {
+    translated = extract(await api.translate(text, { langFrom, langTo }));
+  } catch (err) {
+    translated = extract(await api.translate(text));
+    if (!translated) throw err;
+  }
+  if (!translated) {
+    translated = extract(await api.translate(text));
+  }
+  if (!translated) {
+    throw new Error('Empty response from Zotero PDF Translate');
+  }
+  if (src !== target && detectLang(translated) !== target) {
+    throw new Error(`Zotero PDF Translate target language mismatch (expected ${target})`);
+  }
+  return translated;
+}
+
 export async function translateText(
   text: string,
   target: UILanguage,
-  provider: TranslateProvider = 'google',
+  provider: TranslateProvider = 'pdftranslate',
   onDebug?: (msg: string) => void,
-  llmConfig?: OpenAITranslateConfig
+  llmConfig?: OpenAITranslateConfig,
+  zotArg?: any
 ): Promise<string> {
   if (!text || !text.trim()) {
     return text;
@@ -132,13 +173,18 @@ export async function translateText(
   }
   const order: TranslateProvider[] =
     provider === 'openai'
-      ? ['openai', 'google', 'mymemory']
+      ? ['openai', 'pdftranslate', 'google', 'mymemory']
       : provider === 'mymemory'
         ? ['mymemory', 'google']
-        : ['google', 'mymemory'];
+        : provider === 'google'
+          ? ['google', 'mymemory']
+          : ['pdftranslate', 'google', 'mymemory'];
   let lastError: unknown;
   for (const p of order) {
     try {
+      if (p === 'pdftranslate') {
+        return await translateViaPDFTranslate(text, target, src, zotArg);
+      }
       if (p === 'openai') {
         return await translateViaOpenAI(text, target, llmConfig);
       }

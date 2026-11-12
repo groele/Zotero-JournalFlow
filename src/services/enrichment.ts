@@ -99,17 +99,40 @@ export async function fetchUnpaywall(doi: string): Promise<UnpaywallRecord | nul
   }
 }
 
+function toArXivHTMLURL(url: string | undefined): string | null {
+  if (!url) return null;
+  const m = url.match(/https?:\/\/arxiv\.org\/(?:abs|pdf|html)\/([^\s?#]+)/i);
+  if (!m) return null;
+  const id = m[1].replace(/\.pdf$/i, '').replace(/\/+$/, '');
+  return id ? `https://arxiv.org/html/${id}/` : null;
+}
+
 export async function getVisualSourcePages(
   article: JournalArticle,
   options: { includeUnpaywall?: boolean } = {}
 ): Promise<string[]> {
   const urls: Array<string | undefined> = [];
-  if (article.url) urls.push(article.url);
-  if (article.doi) urls.push(`https://doi.org/${article.doi}`);
+  if (article.url) {
+    urls.push(article.url);
+    const arxivSelf = toArXivHTMLURL(article.url);
+    if (arxivSelf) urls.push(arxivSelf);
+  }
+  if (article.doi) {
+    urls.push(`https://doi.org/${article.doi}`);
+    const arxivDoi = article.doi.match(/^10\.48550\/arxiv\.([^\s?#]+)$/i);
+    if (arxivDoi?.[1]) {
+      urls.push(`https://arxiv.org/html/${arxivDoi[1]}/`);
+    }
+  }
   if (article.pmcid) {
-    urls.push(`https://europepmc.org/article/PMC/${article.pmcid}`);
+    urls.push(
+      `https://europepmc.org/article/PMC/${article.pmcid}`,
+      `https://pmc.ncbi.nlm.nih.gov/articles/${article.pmcid}/`
+    );
   }
   for (const url of article.fullTextLinks || []) {
+    const arxivHTML = toArXivHTMLURL(url);
+    if (arxivHTML) urls.push(arxivHTML);
     urls.push(url);
   }
 
@@ -120,10 +143,16 @@ export async function getVisualSourcePages(
   const oa = includeUnpaywall ? article._unpaywall : null;
   if (oa) {
     if (oa.best_oa_location) {
+      const arxivBest =
+        toArXivHTMLURL(oa.best_oa_location.url_for_landing_page) ||
+        toArXivHTMLURL(oa.best_oa_location.url);
+      if (arxivBest) urls.push(arxivBest);
       urls.push(oa.best_oa_location.url_for_landing_page);
       urls.push(oa.best_oa_location.url);
     }
     for (const loc of oa.oa_locations || []) {
+      const arxivLoc = toArXivHTMLURL(loc.url_for_landing_page) || toArXivHTMLURL(loc.url);
+      if (arxivLoc) urls.push(arxivLoc);
       urls.push(loc.url_for_landing_page);
       urls.push(loc.url);
     }
@@ -134,7 +163,7 @@ export async function getVisualSourcePages(
 
   return uniqueURLs(urls)
     .filter((u) => !/\.(pdf|zip|docx?|pptx?|epub|xml|ris|bib)([?#].*)?$/i.test(u))
-    .slice(0, 6);
+    .slice(0, 10);
 }
 
 export async function enrichSingleArticleAbstract(

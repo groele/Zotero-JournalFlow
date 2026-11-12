@@ -113,9 +113,10 @@ export const FIELDS: Record<'workspace' | 'feed' | 'media', PreferenceFieldSpec[
       fallbackLabel: 'Primary translation service',
       type: 'select',
       options: [
+        ['pdftranslate', 'Zotero PDF Translate plugin (with Google/MyMemory fallback)'],
         ['google', 'Google Translate (with MyMemory fallback)'],
         ['mymemory', 'MyMemory (with Google fallback)'],
-        ['openai', 'OpenAI-Compatible LLM (with Google/MyMemory fallback)'],
+        ['openai', 'OpenAI-Compatible LLM (with fallback)'],
       ],
     },
     {

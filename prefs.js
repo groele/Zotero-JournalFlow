@@ -7,7 +7,7 @@ pref("extensions.journalflow.articlesPerJournal", 200);
 pref("extensions.journalflow.filterArticleTypes", true);
 pref("extensions.journalflow.cacheTTLHours", 12);
 pref("extensions.journalflow.loadFigures", true);
-pref("extensions.journalflow.translateProvider", "google");
+pref("extensions.journalflow.translateProvider", "pdftranslate");
 pref("extensions.journalflow.llmEndpoint", "https://api.openai.com/v1/chat/completions");
 pref("extensions.journalflow.llmApiKey", "");
 pref("extensions.journalflow.llmModel", "gpt-4o-mini");

@@ -193,6 +193,40 @@ test('BibTeX citation formatting and subscription preset packs + JSON import wor
   assert.deepEqual(toPlain(parsed[0].altIssns), ['1520-5126']);
 });
 
+test('exportSubscriptionsWithPicker lets the user choose a save path via native FilePicker and handles cancellation', async () => {
+  const written = new Map();
+  let pickerAction = 'ok';
+  class MockFilePicker {
+    modeSave = 1;
+    returnOK = 0;
+    returnReplace = 2;
+    returnCancel = 1;
+    init(win, title, mode) {
+      this.win = win;
+      this.title = title;
+      this.mode = mode;
+    }
+    appendFilter() {}
+    async show() {
+      if (pickerAction === 'cancel') return this.returnCancel;
+      this.file = 'D:/Exports/my-journals.json';
+      return this.returnOK;
+    }
+  }
+  const subs = loadTsModule('src/host/subscriptions.ts', {
+    Zotero: { getMainWindow: () => ({ id: 'main' }) },
+    ChromeUtils: { importESModule: () => ({ FilePicker: MockFilePicker }) },
+    IOUtils: { writeUTF8: async (p, content) => written.set(p, content) },
+  });
+  const okRes = await subs.exportSubscriptionsWithPicker('{"journals":[]}', 'Export JSON');
+  assert.deepEqual(toPlain(okRes), { saved: true, path: 'D:/Exports/my-journals.json' });
+  assert.equal(written.get('D:/Exports/my-journals.json'), '{"journals":[]}');
+
+  pickerAction = 'cancel';
+  const cancelRes = await subs.exportSubscriptionsWithPicker('{"journals":[]}', 'Export JSON');
+  assert.deepEqual(toPlain(cancelRes), { saved: false, canceled: true });
+});
+
 test('zoteroImport creates native journalArticle item on translator failure and looks up existing library DOIs', async () => {
   const savedItems = [];
   class MockItem {
@@ -278,6 +312,7 @@ test('preferences pane enables LLM endpoint/key/model controls strictly when tra
   const providerSel = doc.getElementById('pref-translateProvider');
   const keyInput = doc.getElementById('pref-llmApiKey');
   assert.ok(providerSel);
+  assert.equal(providerSel.options[0]?.value, 'pdftranslate');
   assert.ok(keyInput);
   assert.equal(keyInput.disabled, true);
   assert.ok(keyInput.closest('.jf-control-row').classList.contains('jf-subordinate-row'));
@@ -355,7 +390,7 @@ test('feed.js guards stale journal switches via loadGeneration, filters pills, b
       getUILanguageMode: () => 'auto',
       setUILanguage: () => {},
       getWindowMode: () => 'tab',
-      getString: (id) => id,
+      getString: (id) => (id === 'export-subs-ok' ? 'Exported: {path}' : id),
       getPref: (k) => (k === 'loadFigures' ? false : true),
       getJournals: () => [
         { issn: '0028-0836', title: 'Nature', publisher: 'Springer Nature' },
@@ -372,6 +407,7 @@ test('feed.js guards stale journal switches via loadGeneration, filters pills, b
       dedupeArticles: (arr) => arr,
       getExistingLibraryDOIs: async () => ({}),
       getUserCollections: () => ({ collections: [{ id: 42, name: 'AI Papers' }], activeCollectionID: 42 }),
+      exportSubscriptionsToFile: async () => ({ saved: true, path: 'D:/Exports/sub-test.json' }),
       importArticleToZotero: async (article, opts) => {
         batchImported.push({ doi: article.doi, collectionID: opts.collectionID });
         return { itemID: 500, usedFallback: false };
@@ -437,6 +473,13 @@ test('feed.js guards stale journal switches via loadGeneration, filters pills, b
   assert.equal(stage.classList.contains('light-canvas'), false);
   canvasBtn.click();
   assert.equal(stage.classList.contains('light-canvas'), true);
+
+  // Export JSON button triggers native file picker helper and shows exported path notice
+  doc.getElementById('export-subs-btn').click();
+  await flushMicrotasks(20);
+  const notice = doc.getElementById('notice');
+  assert.equal(notice.hidden, false);
+  assert.match(notice.textContent, /D:\/Exports\/sub-test\.json/);
 });
 
 test('zoteroImport auto-creates journal-named collections on first import, reuses existing ones, respects parent scopes, and guards concurrency', async () => {

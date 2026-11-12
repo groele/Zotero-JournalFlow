@@ -37,6 +37,18 @@ export function parseEuropePMCFigures(
   return figures;
 }
 
+function resolvePageBaseURL(doc: Document, baseURL: string): string {
+  const baseHref = doc.querySelector('base[href]')?.getAttribute('href');
+  if (baseHref) {
+    const resolved = resolveURL(baseURL, baseHref);
+    if (resolved) return resolved;
+  }
+  if (/^https?:\/\/arxiv\.org\/html\/[^/?#]+$/i.test(baseURL)) {
+    return `${baseURL}/`;
+  }
+  return baseURL;
+}
+
 export function parsePublisherVisuals(
   text: string,
   baseURL: string,
@@ -71,12 +83,17 @@ export function parsePublisherVisuals(
   }
 
   const doc = parser.parseFromString(text, 'text/html');
+  const resolvedBase = resolvePageBaseURL(doc, baseURL);
   const seen = createFigureSeen();
   const figures: ArticleFigure[] = [];
   const selector = [
     'article figure',
     'main figure',
     "[role='main'] figure",
+    '.article__body figure',
+    '.article-full-text figure',
+    '.hlFld-Fulltext figure',
+    '.ltx_figure',
     'figure',
     '.html-fig',
     '.figure-wrap',
@@ -97,6 +114,7 @@ export function parsePublisherVisuals(
     "[class*='extended']",
   ].join(',');
 
+  let unlabeledSeq = 1;
   for (const container of Array.from(doc.querySelectorAll(selector))) {
     if (figures.length >= 24) break;
     const marker = [
@@ -108,7 +126,7 @@ export function parsePublisherVisuals(
     ].join(' ');
     if (isPreviewFigure(marker)) continue;
 
-    const urls = extractContainerURLs(container, baseURL);
+    const urls = extractContainerURLs(container, resolvedBase);
     if (!urls.length) continue;
     const img = container.querySelector('img');
     const label =
@@ -139,12 +157,16 @@ export function parsePublisherVisuals(
         '.html-fig_description',
         "[class*='caption']",
       ]) || cleanText(img?.getAttribute('title') || img?.getAttribute('alt'));
+    const isSemanticFigure = container.matches(
+      "figure, .ltx_figure, .c-article-section__figure, .article-section__figure, [data-test='figure'], [data-component='figure']"
+    );
     addFigure(figures, seen, {
       label,
       caption,
-      urls,
+      fallbackLabel: isSemanticFigure ? `Fig. ${unlabeledSeq++}` : undefined,
       metaLabel: [marker, img?.getAttribute('alt'), img?.getAttribute('title')].filter(Boolean).join(' '),
       urlHint: urls.join(' '),
+      urls,
     });
   }
   return figures;

@@ -1,7 +1,7 @@
 export type UILanguage = 'en' | 'zh';
 export type UILanguageMode = 'auto' | UILanguage;
 export type WindowOpenMode = 'tab' | 'window';
-export type TranslateProvider = 'google' | 'mymemory' | 'openai';
+export type TranslateProvider = 'pdftranslate' | 'google' | 'mymemory' | 'openai';
 export type ArticleFilterMode = 'all' | 'oa' | 'abstract' | 'figures' | 'unread' | 'starred';
 export type PresetPackId = 'top' | 'aps' | 'acs' | 'wiley' | 'springer' | 'rsc' | 'elsevier' | 'ieee';
 export type JournalFetchState = 'idle' | 'loading' | 'ok' | 'error';
@@ -56,6 +56,7 @@ export interface ArticleFigure {
   height?: number;
   metaLabel?: string;
   urlHint?: string;
+  fallbackLabel?: string;
   url?: string;
 }
 
@@ -140,6 +141,7 @@ export interface JournalFlowSubscriptionService {
   unfollowJournal(issn: string): JournalSubscription[];
   applyJournalPreset(packId: PresetPackId): JournalSubscription[];
   exportSubscriptionsJSON(): string;
+  exportSubscriptionsToFile?(): Promise<{ saved: boolean; path?: string; canceled?: boolean; unavailable?: boolean }>;
   importSubscriptionsJSON(raw: string): JournalSubscription[];
   searchJournals(query: string): Promise<JournalSubscription[]>;
   getJournalByISSN(issn: string): Promise<JournalSubscription>;

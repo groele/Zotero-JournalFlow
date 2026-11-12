@@ -4,12 +4,12 @@ import { parseFluentFeedMessages } from './i18n/fluent';
 import type { UILanguage } from './types';
 
 export const ADDON_ID = 'journalflow@groele.org';
-export const ADDON_VERSION = '2.0.6';
+export const ADDON_VERSION = '2.0.7';
 export const CHROME_ROOT = 'chrome://journalflow/content/';
 export const PREF_BRANCH = 'extensions.journalflow.';
 export const LEGACY_PREF_BRANCH = 'extensions.journallens.';
 
-export const CACHE_SCHEMA = 'figures-v7-multi-publisher';
+export const CACHE_SCHEMA = 'figures-v8-multi-publisher';
 export const DAILY_FEED_CACHE_SCHEMA = 'daily-feed-v2';
 export const CACHE_FILE_NAME = 'journalflow-cache.json';
 export const DAILY_FEED_CACHE_MAX_BYTES = 8 * 1024 * 1024;
@@ -33,7 +33,7 @@ export const PREF_DEFAULTS: Record<string, string | number | boolean> = {
   filterArticleTypes: true,
   cacheTTLHours: 12,
   loadFigures: true,
-  translateProvider: 'google',
+  translateProvider: 'pdftranslate',
   llmEndpoint: 'https://api.openai.com/v1/chat/completions',
   llmApiKey: '',
   llmModel: 'gpt-4o-mini',

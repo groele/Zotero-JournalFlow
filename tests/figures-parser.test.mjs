@@ -5,6 +5,7 @@ import { loadTsModule, toPlain } from './helpers.mjs';
 const labels = loadTsModule('src/services/figureLabels.ts');
 const figures = loadTsModule('src/services/figures.ts');
 const parser = loadTsModule('src/services/figureParser.ts');
+const fallback = loadTsModule('src/services/figureFallback.ts');
 
 test('parseFigureLabelInfo classifies main, extended, and supplementary figures accurately', () => {
   assert.deepEqual(labels.parseFigureLabelInfo('Figure 2B')?.label, 'Fig. 2b');
@@ -60,4 +61,41 @@ test('parsePublisherVisuals parses HTML figure elements, expands hi-res variants
   assert.equal(parsed[0].label, 'Fig. 1');
   assert.equal(parsed[0].caption, 'Cryo-EM density map at 2.8 A resolution.');
   assert.ok(parsed[0].urls.includes('https://journal.example.org/media/fig1_full.png'));
+});
+
+test('parsePublisherVisuals resolves arXiv HTML5 <base href> and unlabeled ltx_figure elements', () => {
+  const html = `
+    <html><head><base href="/html/2610.16091v1/"/></head><body>
+      <figure class="ltx_figure">
+        <img class="ltx_graphics" src="x1.png" alt="Crystal structure"/>
+        <figcaption class="ltx_caption">Phase diagram across temperature.</figcaption>
+      </figure>
+    </body></html>
+  `;
+  const parsed = parser.parsePublisherVisuals(html, 'https://arxiv.org/html/2610.16091v1');
+  assert.equal(parsed.length, 1);
+  assert.equal(parsed[0].urls[0], 'https://arxiv.org/html/2610.16091v1/x1.png');
+  assert.match(parsed[0].label, /Fig\. 1/);
+});
+
+test('parseEuropePMCFallbackFigures & parseFallbackVisuals recover graphical abstracts and filter logos', () => {
+  const xml = `
+    <article xmlns:xlink="http://www.w3.org/1999/xlink">
+      <abstract abstract-type="graphical"><graphic xlink:href="ga-panel.png"/></abstract>
+    </article>
+  `;
+  const xmlFigs = fallback.parseEuropePMCFallbackFigures(xml, 'PMC777777');
+  assert.equal(xmlFigs.length, 1);
+  assert.equal(xmlFigs[0].label, 'Graphical Abstract');
+  assert.ok(xmlFigs[0].urls.some((u) => u.includes('PMC777777/bin/ga-panel.png')));
+
+  const html = `
+    <html><head>
+      <meta property="og:image" content="https://cdn.example.org/default-cover.png"/>
+      <meta property="og:image" content="https://cdn.example.org/paper-toc.png"/>
+    </head><body></body></html>
+  `;
+  const fb = fallback.parseFallbackVisuals(html, 'https://cdn.example.org/article/1');
+  assert.equal(fb.length, 1);
+  assert.deepEqual(toPlain(fb[0].urls), ['https://cdn.example.org/paper-toc.png']);
 });

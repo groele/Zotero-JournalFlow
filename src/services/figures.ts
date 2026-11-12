@@ -49,6 +49,19 @@ export function cleanFigure(figure: Partial<ArticleFigure> | null | undefined): 
   if (!info) {
     info = parseFigureLabelInfo([figure.metaLabel || '', figure.urlHint || '', urls.join(' ')].join(' '));
   }
+  if (!info && figure.fallbackLabel) {
+    const fbLabel = cleanText(figure.fallbackLabel);
+    if (fbLabel) {
+      info = {
+        kind: 'main',
+        group: 3,
+        number: 999,
+        suffix: fbLabel.toLowerCase(),
+        key: `fallback:${normalizeFigureText(fbLabel)}:${urls[0]}`,
+        label: fbLabel,
+      };
+    }
+  }
   if (!info) return null;
 
   caption = stripKnownFigureLabel(info, caption);

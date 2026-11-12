@@ -7,11 +7,20 @@ declare const Zotero: any;
 const S2_BATCH_URL =
   'https://api.semanticscholar.org/graph/v1/paper/batch?fields=externalIds,abstract,isOpenAccess,openAccessPdf';
 
+function normalizeArXivID(raw: unknown): string {
+  const clean = String(raw || '')
+    .trim()
+    .replace(/^arxiv:\s*/i, '');
+  return /^[a-z0-9.\-/]+$/i.test(clean) && /\d{4}\.\d{4,5}|[a-z-]+\/\d{7}/i.test(clean) ? clean : '';
+}
+
 export async function enrichWithSemanticScholar(
   articles: JournalArticle[]
 ): Promise<JournalArticle[]> {
   const targets = articles.filter(
-    (a) => a.doi && (!a.abstract || !a.isOpenAccess)
+    (a) =>
+      a.doi &&
+      (!a.abstract || !a.isOpenAccess || !(a.fullTextLinks || []).some((u) => /arxiv\.org\/html\//i.test(u)))
   );
   if (!targets.length) return articles;
 
@@ -37,8 +46,17 @@ export async function enrichWithSemanticScholar(
           article.isOpenAccess = true;
         }
         const oaPdf = record.openAccessPdf?.url;
+        const arxivId = normalizeArXivID(record.externalIds?.ArXiv);
+        const extraLinks: string[] = [];
+        if (arxivId) {
+          article.isOpenAccess = true;
+          extraLinks.push(`https://arxiv.org/html/${arxivId}/`, `https://arxiv.org/abs/${arxivId}`);
+        }
         if (typeof oaPdf === 'string' && oaPdf) {
-          article.fullTextLinks = uniqueURLs([...(article.fullTextLinks || []), oaPdf]);
+          extraLinks.push(oaPdf);
+        }
+        if (extraLinks.length) {
+          article.fullTextLinks = uniqueURLs([...(article.fullTextLinks || []), ...extraLinks]);
         }
       }
     } catch (error) {

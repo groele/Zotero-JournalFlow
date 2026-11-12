@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { loadTsModule } from './helpers.mjs';
+import { loadTsModule, toPlain } from './helpers.mjs';
 
 test('translation language detection, target switching, and chunking respect sentence boundaries', () => {
   const tx = loadTsModule('src/services/translation.ts');
@@ -12,6 +12,41 @@ test('translation language detection, target switching, and chunking respect sen
   const chunks = tx.chunkText('First sentence. Second sentence. Third sentence.', 32);
   assert.ok(chunks.length >= 2);
   assert.ok(chunks.every((c) => c.length <= 32));
+});
+
+test('translateText integrates windingwind/zotero-pdf-translate first and falls back smoothly when absent or mismatched', async () => {
+  const calls = [];
+  const mockFetch = async (url) => ({
+    ok: true,
+    status: 200,
+    url,
+    text: async () => JSON.stringify([[['谷歌回退翻译标题']]]),
+  });
+  const txOk = loadTsModule('src/services/translation.ts', {
+    fetch: mockFetch,
+    Zotero: {
+      PDFTranslate: {
+        api: {
+          translate: async (text, opts) => {
+            calls.push({ text, opts });
+            return { result: '基于 PDF Translate 插件的中文译文' };
+          },
+        },
+      },
+    },
+  });
+  const res1 = await txOk.translateText('Quantum Hall Effect', 'zh', 'pdftranslate');
+  assert.equal(res1, '基于 PDF Translate 插件的中文译文');
+  assert.equal(calls.length, 1);
+  assert.deepEqual(toPlain(calls[0].opts), { langFrom: 'en', langTo: 'zh-CN' });
+
+  // Fallback when Zotero.PDFTranslate is unavailable
+  const txFallback = loadTsModule('src/services/translation.ts', {
+    fetch: mockFetch,
+    Zotero: {},
+  });
+  const res2 = await txFallback.translateText('Quantum Hall Effect', 'zh', 'pdftranslate');
+  assert.equal(res2, '谷歌回退翻译标题');
 });
 
 test('DailyFeedCacheStore persists via IOUtils, invalidates by ISSN, and strips transient UI fields', async () => {

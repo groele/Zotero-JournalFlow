@@ -166,15 +166,21 @@ export function renderSidebarPresetsAndIO(
 
   if (exportBtn) {
     exportBtn.textContent = S('export-subs');
-    exportBtn.addEventListener(
-      'click',
-      () => {
+    exportBtn.addEventListener('click', async () => {
+      try {
+        if (typeof ctx.JournalFlow.exportSubscriptionsToFile === 'function') {
+          const res = await ctx.JournalFlow.exportSubscriptionsToFile();
+          if (res?.saved) {
+            showNotice(doc, state, S('export-subs-ok').replace('{path}', res.path || 'journalflow-subscriptions.json'), 'warn');
+            return;
+          }
+          if (res?.canceled || !res?.unavailable) return;
+        }
         const json = ctx.JournalFlow.exportSubscriptionsJSON?.() || JSON.stringify(state.journals, null, 2);
         const BlobCtor = (doc.defaultView as any)?.Blob || globalThis.Blob;
         const URLApi = (doc.defaultView as any)?.URL || globalThis.URL;
-        if (!BlobCtor || !URLApi?.createObjectURL) return;
-        const blob = new BlobCtor([json], { type: 'application/json' });
-        const url = URLApi.createObjectURL(blob);
+        if (!BlobCtor || !URLApi?.createObjectURL) throw new Error('Export API unavailable');
+        const url = URLApi.createObjectURL(new BlobCtor([json], { type: 'application/json' }));
         const a = doc.createElement('a');
         a.href = url;
         a.download = 'journalflow-subscriptions.json';
@@ -182,9 +188,11 @@ export function renderSidebarPresetsAndIO(
         a.click();
         a.remove();
         setTimeout(() => URLApi.revokeObjectURL?.(url), 1000);
-      },
-      { signal }
-    );
+        showNotice(doc, state, S('export-subs-ok').replace('{path}', 'journalflow-subscriptions.json'), 'warn');
+      } catch {
+        showNotice(doc, state, S('export-subs-err'), 'error');
+      }
+    }, { signal });
   }
 
   if (importBtn && fileInput) {

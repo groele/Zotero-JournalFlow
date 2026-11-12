@@ -66,4 +66,14 @@ test('getVisualSourcePages deduplicates URLs and excludes binary files (.pdf, .z
     'https://doi.org/10.1038/test-1',
     'https://pmc.ncbi.nlm.nih.gov/articles/PMC12345/',
   ]);
+
+  const arxivArticle = {
+    doi: '10.48550/arXiv.2610.16091',
+    url: 'https://arxiv.org/abs/2610.16091v1',
+    pmcid: 'PMC888888',
+    fullTextLinks: ['https://arxiv.org/pdf/2610.16091'],
+  };
+  const arxivPages = await enrichment.getVisualSourcePages(arxivArticle, { includeUnpaywall: false });
+  assert.ok(arxivPages.includes('https://arxiv.org/html/2610.16091v1/'));
+  assert.ok(arxivPages.includes('https://pmc.ncbi.nlm.nih.gov/articles/PMC888888/'));
 });

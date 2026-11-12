@@ -1,5 +1,5 @@
 import type { JournalArticle } from '../types';
-import { httpGetText } from './http';
+import { httpGetText, uniqueURLs } from './http';
 import { normalizeDOI } from './openalex';
 
 declare const Zotero: any;
@@ -19,11 +19,17 @@ function tagText(entryXML: string, tag: string): string {
   return m ? m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
 }
 
-export function extractArXivAbstract(
+function parseArXivIdFromEntry(entryXML: string): string {
+  const idText = tagText(entryXML, 'id');
+  const m = idText.match(/arxiv\.org\/(?:abs|pdf|html)\/([^\s?#]+)/i);
+  return m ? m[1].replace(/v\d+$/i, '') : '';
+}
+
+export function extractArXivMatch(
   atomXML: string,
   article: Pick<JournalArticle, 'doi' | 'title'>
-): string {
-  if (!atomXML) return '';
+): { abstract: string; arxivId: string } | null {
+  if (!atomXML) return null;
   const entries = atomXML.match(/<entry\b[\s\S]*?<\/entry>/gi) || [];
   const targetDOI = normalizeDOI(article.doi);
   const targetTitle = normalizeTitleKey(article.title);
@@ -37,13 +43,24 @@ export function extractArXivAbstract(
     );
     if (!doiMatch && !titleMatch) continue;
     const summary = tagText(entry, 'summary');
-    if (summary.length >= 40) return summary;
+    const arxivId = parseArXivIdFromEntry(entry);
+    if (summary.length >= 40 || arxivId) {
+      return { abstract: summary.length >= 40 ? summary : '', arxivId };
+    }
   }
-  return '';
+  return null;
+}
+
+export function extractArXivAbstract(
+  atomXML: string,
+  article: Pick<JournalArticle, 'doi' | 'title'>
+): string {
+  return extractArXivMatch(atomXML, article)?.abstract || '';
 }
 
 export async function enrichArticleWithArXiv(article: JournalArticle): Promise<boolean> {
-  if (article.abstract) return false;
+  const hasArXivLink = (article.fullTextLinks || []).some((u) => /arxiv\.org\/html\//i.test(u));
+  if (article.abstract && hasArXivLink) return false;
   if (
     !PHYSICS_DOI_PREFIX_RE.test(article.doi || '') &&
     !(article.fullTextLinks || []).some((u) => /arxiv\.org/i.test(u))
@@ -57,9 +74,17 @@ export async function enrichArticleWithArXiv(article: JournalArticle): Promise<b
       : `ti:"${article.title.replace(/["']/g, ' ').slice(0, 120)}"`;
     const url = `https://export.arxiv.org/api/query?search_query=${encodeURIComponent(q)}&start=0&max_results=2`;
     const xml = await httpGetText(url, { timeout: 9000, retries: 1 });
-    const abstract = extractArXivAbstract(xml, article);
-    if (abstract) {
-      article.abstract = abstract;
+    const match = extractArXivMatch(xml, article);
+    if (match?.arxivId) {
+      article.isOpenAccess = true;
+      article.fullTextLinks = uniqueURLs([
+        ...(article.fullTextLinks || []),
+        `https://arxiv.org/html/${match.arxivId}/`,
+        `https://arxiv.org/abs/${match.arxivId}`,
+      ]);
+    }
+    if (!article.abstract && match?.abstract) {
+      article.abstract = match.abstract;
       article.abstractSource = 'arxiv';
       return true;
     }

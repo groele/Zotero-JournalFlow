@@ -115,7 +115,7 @@ function buildCard(
   const abstractWrap = doc.createElement('div');
   body.appendChild(abstractWrap);
 
-  if (ctx.JournalFlow.getPref('loadFigures') && (article.pmcid || article.url || article.doi)) {
+  if (ctx.JournalFlow.getPref('loadFigures') && (article.pmcid || article.url || article.doi || article.fullTextLinks?.length)) {
     const figures = doc.createElement('div');
     figures.className = 'figures';
     figures.hidden = true;
@@ -221,11 +221,11 @@ export function renderArticles(doc: Document, ctx: FeedHostContext, state: FeedU
   cardBindings.set(state, bindings);
 
   const visibleSlice = filtered.slice(0, state.visibleLimit);
-  const prime: CardElement[] = [];
+  const figCards: CardElement[] = [];
   for (const article of visibleSlice) {
     const card = buildCard(doc, ctx, state, article, bindings);
     cards.appendChild(card);
-    if (card._figuresEl && prime.length < 6) prime.push(card);
+    if (card._figuresEl) figCards.push(card);
   }
 
   if (filtered.length > visibleSlice.length) {
@@ -245,10 +245,26 @@ export function renderArticles(doc: Document, ctx: FeedHostContext, state: FeedU
     cards.appendChild(wrap);
   }
 
-  state.primeTimer = (doc.defaultView || globalThis).setTimeout(() => {
-    state.primeTimer = null;
-    for (const card of prime) {
-      void loadFiguresForCard(doc, ctx, card, (figs, idx) => openLightbox(doc, state, figs, idx));
-    }
-  }, 200) as unknown as number;
+  const win = doc.defaultView || globalThis;
+  const openLightboxFor = (figs: import('../types').ArticleFigure[], idx: number) =>
+    openLightbox(doc, state, figs, idx);
+  let cursor = 0;
+  const pumpFigures = (batchSize: number, delayMs: number) => {
+    state.primeTimer = win.setTimeout(() => {
+      state.primeTimer = null;
+      let launched = 0;
+      while (cursor < figCards.length && launched < batchSize) {
+        const card = figCards[cursor++];
+        if (!card.isConnected || card._figuresRequested) continue;
+        launched++;
+        void loadFiguresForCard(doc, ctx, card, openLightboxFor);
+      }
+      if (cursor < figCards.length) {
+        pumpFigures(4, 180);
+      }
+    }, delayMs) as unknown as number;
+  };
+  if (figCards.length) {
+    pumpFigures(12, 60);
+  }
 }
