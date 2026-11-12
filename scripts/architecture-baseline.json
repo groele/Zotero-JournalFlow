@@ -1,0 +1,20 @@
+{
+  "policy": "freeze-and-shrink",
+  "maxSourceLines": 360,
+  "capturedAt": "2026-11-12",
+  "debtCleared": true,
+  "note": "All source files in src/ must stay <= 360 lines with zero oversized debt.",
+  "lastReleasedVersion": "2.0.4",
+  "splitHistory": [
+    {
+      "version": "1.0.0",
+      "date": "2026-11-12",
+      "resolved": [
+        "Refactored JournalLens v0.3.9 into Zotero JournalFlow with 100% TypeScript modular architecture (<= 360 lines/file)",
+        "Upgraded runtime compatibility to Zotero 10 ~ 12 (Gecko 140+/153+): removed legacy Components.*/oncommand/inline scripts, added Tab & Window dual-mode, AbortController lifecycle cleanup, and IOUtils daily feed cache",
+        "Standardized Preferences UI with 40px Golden Grid, Fluent en-US/zh-CN localization, and parent-child dependency sync"
+      ]
+    }
+  ],
+  "oversized": {}
+}

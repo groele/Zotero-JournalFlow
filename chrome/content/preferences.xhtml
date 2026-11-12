@@ -1,0 +1,126 @@
+<linkset xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         xmlns:html="http://www.w3.org/1999/xhtml">
+  <html:link rel="localization" href="journalflow.ftl"/>
+</linkset>
+<vbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+      xmlns:html="http://www.w3.org/1999/xhtml"
+      id="journalflow-preferences-pane"
+      class="jf-prefs-container">
+
+  <html:link rel="stylesheet" href="chrome://journalflow/content/styles/preferences.css"/>
+
+  <html:header class="jf-pref-header">
+    <html:div class="jf-pref-title-row">
+      <html:h1 data-l10n-id="journalflow-pref-brand-title"></html:h1>
+      <html:span class="jf-pref-version">v2.0.4</html:span>
+    </html:div>
+    <html:p class="jf-pref-slogan" data-l10n-id="journalflow-pref-brand-slogan"></html:p>
+    <html:p id="jf-pref-status" class="jf-pref-status" role="status" aria-live="polite" data-l10n-id="journalflow-pref-status-loading"></html:p>
+  </html:header>
+
+  <!-- Card 1: Workspace & Display (only card open by default) -->
+  <html:details id="jf-group-workspace" class="jf-pref-card" open="open">
+    <html:summary class="jf-card-header">
+      <html:span class="jf-card-title" data-l10n-id="journalflow-pref-group-workspace-title"></html:span>
+    </html:summary>
+    <html:div class="jf-card-body">
+      <html:p class="jf-pref-desc" data-l10n-id="journalflow-pref-group-workspace-desc"></html:p>
+      <html:div class="jf-pref-subheading" data-l10n-id="journalflow-pref-subheading-window"></html:div>
+      <html:div id="jf-pref-workspace" class="jf-pref-content"></html:div>
+      <html:div class="jf-action-group jf-action-group-primary">
+        <html:button id="jf-btn-open-workbench" type="button" class="jf-pref-btn jf-pref-btn-primary" data-l10n-id="journalflow-pref-btn-open-workbench"></html:button>
+      </html:div>
+    </html:div>
+  </html:details>
+
+  <!-- Card 2: Journal Feeds & Content Filtering -->
+  <html:details id="jf-group-feed" class="jf-pref-card">
+    <html:summary class="jf-card-header">
+      <html:span class="jf-card-title" data-l10n-id="journalflow-pref-group-feed-title"></html:span>
+    </html:summary>
+    <html:div class="jf-card-body">
+      <html:p class="jf-pref-desc" data-l10n-id="journalflow-pref-group-feed-desc"></html:p>
+      <html:div class="jf-pref-subheading" data-l10n-id="journalflow-pref-subheading-retrieval"></html:div>
+      <html:div id="jf-pref-feed" class="jf-pref-content"></html:div>
+    </html:div>
+  </html:details>
+
+  <!-- Card 3: Translation & Body Figures -->
+  <html:details id="jf-group-media" class="jf-pref-card">
+    <html:summary class="jf-card-header">
+      <html:span class="jf-card-title" data-l10n-id="journalflow-pref-group-media-title"></html:span>
+    </html:summary>
+    <html:div class="jf-card-body">
+      <html:p class="jf-pref-desc" data-l10n-id="journalflow-pref-group-media-desc"></html:p>
+      <html:div class="jf-pref-subheading" data-l10n-id="journalflow-pref-subheading-translation"></html:div>
+      <html:div id="jf-pref-media" class="jf-pref-content"></html:div>
+    </html:div>
+  </html:details>
+
+  <!-- Card 4: Cache & Data Maintenance -->
+  <html:details id="jf-group-maintenance" class="jf-pref-card">
+    <html:summary class="jf-card-header">
+      <html:span class="jf-card-title" data-l10n-id="journalflow-pref-group-maintenance-title"></html:span>
+    </html:summary>
+    <html:div class="jf-card-body">
+      <html:p class="jf-pref-desc" data-l10n-id="journalflow-pref-group-maintenance-desc"></html:p>
+      <html:div class="jf-pref-subheading" data-l10n-id="journalflow-pref-subheading-cache"></html:div>
+      <html:p id="jf-followed-summary" class="jf-pref-desc" data-l10n-id="journalflow-pref-followed-summary" data-l10n-args='{"count": 3}'></html:p>
+      <html:div class="jf-storage-path-box">
+        <html:span data-l10n-id="journalflow-pref-cache-path-label"></html:span>
+        <html:code id="jf-cache-path-code">Zotero/journalflow-cache.json</html:code>
+      </html:div>
+      <html:div class="jf-action-group">
+        <html:button id="jf-btn-clear-cache" type="button" class="jf-pref-btn" data-l10n-id="journalflow-pref-btn-clear-cache"></html:button>
+        <html:button id="jf-btn-reset-defaults" type="button" class="jf-pref-btn jf-pref-btn-warning" data-l10n-id="journalflow-pref-btn-reset-defaults"></html:button>
+      </html:div>
+    </html:div>
+  </html:details>
+
+  <!-- Card 5: Version & Attribution -->
+  <html:details id="jf-group-about" class="jf-pref-card">
+    <html:summary class="jf-card-header">
+      <html:span class="jf-card-title" data-l10n-id="journalflow-pref-group-about-title"></html:span>
+    </html:summary>
+    <html:div class="jf-card-body">
+      <html:p class="jf-pref-desc" data-l10n-id="journalflow-pref-group-about-desc"></html:p>
+      <html:dl class="jf-release-dl">
+        <html:div class="jf-release-row">
+          <html:dt data-l10n-id="journalflow-pref-version-label"></html:dt>
+          <html:dd>v2.0.4</html:dd>
+        </html:div>
+        <html:div class="jf-release-row">
+          <html:dt data-l10n-id="journalflow-pref-compat-label"></html:dt>
+          <html:dd data-l10n-id="journalflow-pref-compat-value"></html:dd>
+        </html:div>
+        <html:div class="jf-release-row">
+          <html:dt data-l10n-id="journalflow-pref-license-label"></html:dt>
+          <html:dd data-l10n-id="journalflow-pref-license-value"></html:dd>
+        </html:div>
+        <html:div class="jf-release-row">
+          <html:dt data-l10n-id="journalflow-pref-upstream-label"></html:dt>
+          <html:dd data-l10n-id="journalflow-pref-upstream-value"></html:dd>
+        </html:div>
+        <html:div class="jf-release-row">
+          <html:dt data-l10n-id="journalflow-pref-package-label"></html:dt>
+          <html:dd>
+            <html:a href="https://github.com/groele/Zotero-JournalFlow/releases/download/v2.0.4/zotero-journalflow-2.0.4.xpi"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-l10n-id="journalflow-pref-package-download-link"
+                    data-l10n-args='{"version": "2.0.4"}'></html:a>
+          </html:dd>
+        </html:div>
+        <html:div class="jf-release-row">
+          <html:dt data-l10n-id="journalflow-pref-repo-label"></html:dt>
+          <html:dd>
+            <html:a href="https://github.com/groele/Zotero-JournalFlow"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-l10n-id="journalflow-pref-repo-link"></html:a>
+          </html:dd>
+        </html:div>
+      </html:dl>
+    </html:div>
+  </html:details>
+</vbox>

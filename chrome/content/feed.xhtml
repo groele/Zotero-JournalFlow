@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>Zotero JournalFlow</title>
+	<meta charset="utf-8"/>
+	<link rel="stylesheet" href="chrome://journalflow/content/styles/feed.css"/>
+	<script src="chrome://journalflow/content/scripts/feed.js" defer="defer"></script>
+</head>
+<body>
+	<header id="topbar">
+		<div id="brand">
+			<img id="brand-icon" src="chrome://journalflow/content/icons/icon.svg" alt="" width="24" height="24"/>
+			<span id="brand-name">Zotero JournalFlow</span>
+			<span id="brand-version" class="brand-badge">v2.0.4</span>
+		</div>
+		<div id="topbar-actions">
+			<span id="lang-label">Language</span>
+			<div id="lang-toggle" class="segmented" role="group" aria-label="Language">
+				<button type="button" data-lang="auto" id="lang-option-auto">Auto</button>
+				<button type="button" data-lang="zh" id="lang-option-zh">中文</button>
+				<button type="button" data-lang="en" id="lang-option-en">EN</button>
+			</div>
+			<button id="refresh-btn" type="button">Refresh</button>
+		</div>
+	</header>
+
+	<div id="layout">
+		<aside id="sidebar">
+			<div id="add-journal">
+				<h2 id="h-add">Follow a journal</h2>
+				<input id="journal-search-input" class="sidebar-field" type="text" placeholder="Journal name or ISSN…"/>
+				<ul id="journal-search-results" hidden="hidden"></ul>
+			</div>
+
+			<div id="followed-header" class="sidebar-section-toolbar">
+				<h2 id="h-followed">Followed journals</h2>
+				<div class="followed-toolbar" role="group">
+					<button id="collapse-publishers-btn" type="button" class="sidebar-tool-btn" title="Collapse all">▾</button>
+					<button id="expand-publishers-btn" type="button" class="sidebar-tool-btn" title="Expand all">▸</button>
+					<button id="sidebar-collapse-btn" type="button" class="sidebar-tool-btn" title="Hide sidebar">⟨</button>
+				</div>
+			</div>
+			<input id="followed-filter-input" class="sidebar-field" type="search" placeholder="Filter followed journals…"/>
+			<ul id="journal-list"></ul>
+
+			<details id="presets-section" class="sidebar-collapsible">
+				<summary class="sidebar-section-header">
+					<span id="h-presets">Starter packs</span>
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" class="section-chevron" aria-hidden="true">
+						<path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+					</svg>
+				</summary>
+				<div id="journal-presets" class="preset-list"></div>
+			</details>
+
+			<div id="subs-io-footer">
+				<details class="sidebar-collapsible" open="open">
+					<summary class="sidebar-section-header">
+						<span id="h-subs-io">Subscriptions</span>
+						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" class="section-chevron" aria-hidden="true">
+							<path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</summary>
+					<div class="subs-io-row">
+						<button id="export-subs-btn" type="button">Export JSON</button>
+						<button id="import-subs-btn" type="button">Import JSON</button>
+						<input id="import-subs-input" type="file" accept="application/json,.json" hidden="hidden"/>
+					</div>
+				</details>
+			</div>
+		</aside>
+		<button id="sidebar-expand-btn" type="button" class="sidebar-rail-btn" hidden="hidden" title="Show sidebar">⟩</button>
+
+		<main id="content">
+			<div id="feed-tools">
+				<input id="article-search-input" type="search" placeholder="Search title or abstract…"/>
+				<div id="filter-pills" class="filter-pills" role="group">
+					<button type="button" data-filter="all" id="filter-all-btn" class="active">All</button>
+					<button type="button" data-filter="oa" id="filter-oa-btn">OA</button>
+					<button type="button" data-filter="abstract" id="filter-abstract-btn">Has Abstract</button>
+					<button type="button" data-filter="figures" id="filter-figures-btn">Has Figures</button>
+					<button type="button" data-filter="unread" id="filter-unread-btn">Unread</button>
+					<button type="button" data-filter="starred" id="filter-starred-btn">Starred</button>
+				</div>
+				<button id="translate-all-btn" type="button">Translate all</button>
+				<span id="article-search-count"></span>
+			</div>
+			<div id="batch-import-bar" hidden="hidden">
+				<button id="select-all-btn" type="button">Select all</button>
+				<select id="collection-select">
+					<option value="" id="collection-root-opt">My Library / Zotero-JournalFlow / &lt;Journal&gt;</option>
+				</select>
+				<button id="batch-import-btn" type="button" disabled="disabled">Import selected (0)</button>
+			</div>
+			<div id="status" hidden="hidden" role="status" aria-live="polite"></div>
+			<div id="notice" hidden="hidden" role="alert"></div>
+			<div id="cards"></div>
+		</main>
+	</div>
+
+	<!-- Figure lightbox -->
+	<div id="lightbox" hidden="hidden">
+		<div id="lightbox-inner">
+			<div id="lightbox-toolbar">
+				<button id="lightbox-canvas-btn" type="button">☀</button>
+				<button id="lightbox-prev" type="button">‹</button>
+				<button id="lightbox-zoom-out" type="button">−</button>
+				<button id="lightbox-zoom-reset" type="button">100%</button>
+				<button id="lightbox-zoom-in" type="button">+</button>
+				<button id="lightbox-next" type="button">›</button>
+				<button id="lightbox-close" type="button">✕</button>
+			</div>
+			<div id="lightbox-stage">
+				<button id="lightbox-nav-prev" class="lightbox-nav" type="button">‹</button>
+				<img id="lightbox-img" src="" alt=""/>
+				<button id="lightbox-nav-next" class="lightbox-nav" type="button">›</button>
+			</div>
+			<div id="lightbox-caption"></div>
+		</div>
+	</div>
+</body>
+</html>

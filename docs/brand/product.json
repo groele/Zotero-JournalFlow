@@ -1,0 +1,23 @@
+{
+  "name": "Zotero JournalFlow",
+  "series": "Zotero Flow",
+  "role": [
+    "期刊追踪",
+    "Discovery"
+  ],
+  "shortDescription": [
+    "在 Zotero 内追踪学术期刊最新论文、提取摘要配图、双语翻译并一键导入文献库。",
+    "Follow academic journals inside Zotero: browse recent articles, recover abstracts and figures, translate, and import by DOI."
+  ],
+  "introduction": [
+    "面向追踪前沿学术期刊的研究者：按 ISSN/刊名订阅期刊，自动聚合近期研究论文、补全缺失摘要、预览正文大图与图注、支持中英双语翻译并一键通过 DOI 导入 Zotero。",
+    "For researchers following leading academic journals: subscribe via Crossref by journal name or ISSN, aggregate recent research articles, recover missing abstracts, inspect validated body figures, translate EN/ZH, and import by DOI."
+  ],
+  "githubDescription": "Follow academic journals inside Zotero with recent feeds, abstract recovery, figure inspection, translation, and DOI import. Derived from Lyz-623/JournalLens v0.3.9.",
+  "repository": "https://github.com/groele/Zotero-JournalFlow",
+  "upstreamRepository": "https://github.com/Lyz-623/JournalLens",
+  "addonID": "journalflow@groele.org",
+  "version": "2.0.4",
+  "releaseStatus": "released",
+  "license": "MIT"
+}

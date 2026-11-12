@@ -1,0 +1,180 @@
+import { POLITE_MAILTO } from '../config';
+import type { JournalArticle, UnpaywallRecord } from '../types';
+import { stripJATS } from './crossref';
+import { httpGetHTML, httpGetJSON, uniqueURLs } from './http';
+import { enrichArticleWithArXiv, enrichWithArXiv } from './arxiv';
+import { enrichWithOpenAlex } from './openalex';
+import { enrichWithSemanticScholar } from './semanticScholar';
+import { runWithConcurrency } from '../utils/concurrency';
+import {
+  abstractFromHTML,
+  decodeEntities,
+  domAbstractFromHTML,
+  jsonLDAbstractFromHTML,
+  metaAbstractFromHTML,
+  normalizeAbstract,
+} from './publisherAbstracts';
+
+declare const Zotero: any;
+
+export {
+  abstractFromHTML,
+  decodeEntities,
+  domAbstractFromHTML,
+  enrichArticleWithArXiv,
+  enrichWithArXiv,
+  enrichWithOpenAlex,
+  enrichWithSemanticScholar,
+  jsonLDAbstractFromHTML,
+  metaAbstractFromHTML,
+  normalizeAbstract,
+};
+
+export { runWithConcurrency } from '../utils/concurrency';
+
+export async function enrichWithEuropePMC(articles: JournalArticle[]): Promise<JournalArticle[]> {
+  const withDOI = articles.filter((a) => a.doi);
+  const batches: JournalArticle[][] = [];
+  for (let i = 0; i < withDOI.length; i += 10) {
+    batches.push(withDOI.slice(i, i + 10));
+  }
+  await runWithConcurrency(batches, 3, async (batch) => {
+    const query = batch.map((a) => `DOI:"${a.doi}"`).join(' OR ');
+    const url =
+      `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=${encodeURIComponent(query)}` +
+      `&resultType=core&format=json&pageSize=${batch.length}`;
+    try {
+      const data = await httpGetJSON<any>(url);
+      const results: any[] = data?.resultList?.result || [];
+      for (const r of results) {
+        const article = batch.find(
+          (a) => r.doi && a.doi.toLowerCase() === String(r.doi).toLowerCase()
+        );
+        if (!article) continue;
+        if (!article.abstract && r.abstractText) {
+          article.abstract = stripJATS(r.abstractText);
+          article.abstractSource = 'europepmc';
+        }
+        article.pmcid = r.pmcid || article.pmcid || null;
+        if (r.isOpenAccess === 'Y') article.isOpenAccess = true;
+        if (!article.authors && r.authorString) {
+          article.authors = r.authorString;
+        }
+        if (r.pubTypeList?.pubType) {
+          article.pubTypes = ([] as unknown[])
+            .concat(r.pubTypeList.pubType)
+            .map((t) => String(t).toLowerCase());
+        }
+      }
+    } catch (error) {
+      if (typeof Zotero !== 'undefined') {
+        Zotero.debug?.(`JournalFlow: Europe PMC enrichment failed: ${error}`);
+      }
+    }
+  });
+  return articles;
+}
+
+export async function enrichBatchMetadata(articles: JournalArticle[]): Promise<JournalArticle[]> {
+  await Promise.allSettled([
+    enrichWithEuropePMC(articles),
+    enrichWithOpenAlex(articles),
+    enrichWithSemanticScholar(articles),
+  ]);
+  return articles;
+}
+
+export async function fetchUnpaywall(doi: string): Promise<UnpaywallRecord | null> {
+  if (!doi) return null;
+  const url =
+    `https://api.unpaywall.org/v2/${encodeURIComponent(doi)}` +
+    `?email=${encodeURIComponent(POLITE_MAILTO)}`;
+  try {
+    return await httpGetJSON<UnpaywallRecord>(url, { retries: 1 });
+  } catch (error) {
+    if (typeof Zotero !== 'undefined') {
+      Zotero.debug?.(`JournalFlow: Unpaywall lookup failed for ${doi}: ${error}`);
+    }
+    return null;
+  }
+}
+
+export async function getVisualSourcePages(
+  article: JournalArticle,
+  options: { includeUnpaywall?: boolean } = {}
+): Promise<string[]> {
+  const urls: Array<string | undefined> = [];
+  if (article.url) urls.push(article.url);
+  if (article.doi) urls.push(`https://doi.org/${article.doi}`);
+  if (article.pmcid) {
+    urls.push(`https://europepmc.org/article/PMC/${article.pmcid}`);
+  }
+  for (const url of article.fullTextLinks || []) {
+    urls.push(url);
+  }
+
+  const includeUnpaywall = options.includeUnpaywall !== false;
+  if (includeUnpaywall && article.doi && article._unpaywall === undefined) {
+    article._unpaywall = await fetchUnpaywall(article.doi);
+  }
+  const oa = includeUnpaywall ? article._unpaywall : null;
+  if (oa) {
+    if (oa.best_oa_location) {
+      urls.push(oa.best_oa_location.url_for_landing_page);
+      urls.push(oa.best_oa_location.url);
+    }
+    for (const loc of oa.oa_locations || []) {
+      urls.push(loc.url_for_landing_page);
+      urls.push(loc.url);
+    }
+    if (oa.is_oa) {
+      article.isOpenAccess = true;
+    }
+  }
+
+  return uniqueURLs(urls)
+    .filter((u) => !/\.(pdf|zip|docx?|pptx?|epub|xml|ris|bib)([?#].*)?$/i.test(u))
+    .slice(0, 6);
+}
+
+export async function enrichSingleArticleAbstract(
+  article: JournalArticle,
+  options: { includeUnpaywall?: boolean } = {}
+): Promise<boolean> {
+  if (article.abstract) return false;
+  if (await enrichArticleWithArXiv(article)) {
+    return true;
+  }
+  const pages = await getVisualSourcePages(article, {
+    includeUnpaywall: Boolean(options.includeUnpaywall),
+  });
+  for (const url of pages) {
+    try {
+      const page = await httpGetHTML(url);
+      const abstract = abstractFromHTML(page.text);
+      if (abstract) {
+        article.abstract = abstract;
+        article.abstractSource = 'publisher';
+        return true;
+      }
+    } catch (error) {
+      if (typeof Zotero !== 'undefined') {
+        Zotero.debug?.(`JournalFlow: abstract fallback skipped for ${url}: ${error}`);
+      }
+    }
+  }
+  return false;
+}
+
+export async function enrichMissingAbstracts(
+  articles: JournalArticle[],
+  onRecovered?: (article: JournalArticle) => void,
+  concurrency = 4
+): Promise<JournalArticle[]> {
+  const missing = articles.filter((a) => !a.abstract && (a.url || a.doi)).slice(0, 50);
+  await runWithConcurrency(missing, concurrency, async (article) => {
+    const ok = await enrichSingleArticleAbstract(article, { includeUnpaywall: false });
+    if (ok) onRecovered?.(article);
+  });
+  return articles;
+}

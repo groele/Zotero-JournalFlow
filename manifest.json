@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "Zotero JournalFlow",
+  "version": "2.0.4",
+  "description": "Follow academic journals inside Zotero: browse recent papers, search title/abstract, recover missing abstracts, validate figures, translate, and import by DOI.",
+  "homepage_url": "https://github.com/groele/Zotero-JournalFlow",
+  "author": "groele",
+  "icons": {
+    "16": "chrome/content/icons/icon-16.png",
+    "32": "chrome/content/icons/icon-32.png",
+    "48": "chrome/content/icons/icon-48.png",
+    "64": "chrome/content/icons/icon-64.png",
+    "96": "chrome/content/icons/icon-96.png",
+    "128": "chrome/content/icons/icon-128.png"
+  },
+  "applications": {
+    "zotero": {
+      "id": "journalflow@groele.org",
+      "strict_min_version": "10.0",
+      "strict_max_version": "12.*",
+      "update_url": "https://raw.githubusercontent.com/groele/Zotero-JournalFlow/main/update.json"
+    }
+  },
+  "browser_specific_settings": {
+    "zotero": {
+      "id": "journalflow@groele.org",
+      "strict_min_version": "10.0",
+      "strict_max_version": "12.*",
+      "update_url": "https://raw.githubusercontent.com/groele/Zotero-JournalFlow/main/update.json"
+    }
+  }
+}

@@ -1,0 +1,98 @@
+import type { JournalArticle } from '../types';
+import { httpGetText } from './http';
+import { normalizeDOI } from './openalex';
+
+declare const Zotero: any;
+
+const PHYSICS_DOI_PREFIX_RE = /^10\.(?:1103|1088|1063|1007|1038|1051|1140|1098)\//i;
+
+function normalizeTitleKey(title: string): string {
+  return String(title || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9\u4e00-\u9fff]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function tagText(entryXML: string, tag: string): string {
+  const m = entryXML.match(new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, 'i'));
+  return m ? m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+}
+
+export function extractArXivAbstract(
+  atomXML: string,
+  article: Pick<JournalArticle, 'doi' | 'title'>
+): string {
+  if (!atomXML) return '';
+  const entries = atomXML.match(/<entry\b[\s\S]*?<\/entry>/gi) || [];
+  const targetDOI = normalizeDOI(article.doi);
+  const targetTitle = normalizeTitleKey(article.title);
+
+  for (const entry of entries) {
+    const entryDOI = normalizeDOI(tagText(entry, 'arxiv:doi'));
+    const entryTitle = normalizeTitleKey(tagText(entry, 'title'));
+    const doiMatch = Boolean(targetDOI && entryDOI && entryDOI === targetDOI);
+    const titleMatch = Boolean(
+      targetTitle.length >= 24 && entryTitle && (entryTitle === targetTitle || entryTitle.includes(targetTitle))
+    );
+    if (!doiMatch && !titleMatch) continue;
+    const summary = tagText(entry, 'summary');
+    if (summary.length >= 40) return summary;
+  }
+  return '';
+}
+
+export async function enrichArticleWithArXiv(article: JournalArticle): Promise<boolean> {
+  if (article.abstract) return false;
+  if (
+    !PHYSICS_DOI_PREFIX_RE.test(article.doi || '') &&
+    !(article.fullTextLinks || []).some((u) => /arxiv\.org/i.test(u))
+  ) {
+    return false;
+  }
+  try {
+    const doi = normalizeDOI(article.doi);
+    const q = doi
+      ? `all:"${doi}"`
+      : `ti:"${article.title.replace(/["']/g, ' ').slice(0, 120)}"`;
+    const url = `https://export.arxiv.org/api/query?search_query=${encodeURIComponent(q)}&start=0&max_results=2`;
+    const xml = await httpGetText(url, { timeout: 9000, retries: 1 });
+    const abstract = extractArXivAbstract(xml, article);
+    if (abstract) {
+      article.abstract = abstract;
+      article.abstractSource = 'arxiv';
+      return true;
+    }
+  } catch (error) {
+    if (typeof Zotero !== 'undefined') {
+      Zotero.debug?.(`JournalFlow: arXiv abstract fallback failed for ${article.doi}: ${error}`);
+    }
+  }
+  return false;
+}
+
+export async function enrichWithArXiv(
+  articles: JournalArticle[],
+  concurrency = 3
+): Promise<JournalArticle[]> {
+  const candidates = articles
+    .filter(
+      (a) =>
+        !a.abstract &&
+        (PHYSICS_DOI_PREFIX_RE.test(a.doi || '') ||
+          (a.fullTextLinks || []).some((u) => /arxiv\.org/i.test(u)))
+    )
+    .slice(0, 16);
+
+  let next = 0;
+  const workerCount = Math.min(Math.max(1, concurrency), candidates.length);
+  await Promise.all(
+    Array.from({ length: workerCount }, async () => {
+      while (next < candidates.length) {
+        const article = candidates[next++];
+        await enrichArticleWithArXiv(article);
+      }
+    })
+  );
+  return articles;
+}

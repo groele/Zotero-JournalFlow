@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none" role="img" aria-labelledby="jf-title jf-desc">
+  <title id="jf-title">Zotero JournalFlow</title>
+  <desc id="jf-desc">Open academic journal wing with live feed streams, crystal discovery lens, and Zotero Flow spark.</desc>
+  <defs>
+    <linearGradient id="jf-folio" x1="16" y1="18" x2="82" y2="106" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="55%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#1D4ED8" />
+    </linearGradient>
+    <linearGradient id="jf-stream-1" x1="30" y1="43" x2="64" y2="50" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#A5F3FC" />
+      <stop offset="100%" stop-color="#22D3EE" />
+    </linearGradient>
+    <linearGradient id="jf-stream-2" x1="30" y1="61" x2="54" y2="66" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#BAE6FD" />
+      <stop offset="100%" stop-color="#38BDF8" />
+    </linearGradient>
+    <linearGradient id="jf-lens-glass" x1="62" y1="50" x2="102" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.92" />
+      <stop offset="100%" stop-color="#E0F2FE" stop-opacity="0.72" />
+    </linearGradient>
+    <linearGradient id="jf-lens-ring" x1="58" y1="46" x2="106" y2="94" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#06B6D4" />
+      <stop offset="55%" stop-color="#0EA5E9" />
+      <stop offset="100%" stop-color="#6366F1" />
+    </linearGradient>
+    <linearGradient id="jf-lens-handle" x1="98" y1="86" x2="115" y2="103" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="100%" stop-color="#4338CA" />
+    </linearGradient>
+    <linearGradient id="jf-spark" x1="92" y1="12" x2="114" y2="34" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F43F5E" />
+      <stop offset="100%" stop-color="#FB923C" />
+    </linearGradient>
+    <filter id="jf-ambient" x="-18%" y="-18%" width="136%" height="136%">
+      <feDropShadow dx="0" dy="6" stdDeviation="5.5" flood-color="#0F172A" flood-opacity="0.18" />
+    </filter>
+  </defs>
+
+  <g filter="url(#jf-ambient)">
+    <!-- Back Layer: Swept Unbounded Journal Folio -->
+    <path d="M 16 32 C 16 21 25 15 36 18 L 75 28 C 79.5 29.2 82 32.8 82 37.5 L 82 95 C 82 102.5 75 107 67.5 104.8 L 24.5 92.6 C 19.2 91.1 16 86.5 16 81 Z"
+          fill="url(#jf-folio)" />
+    <path d="M 22 27 C 26 22 32 21 39 22.8 L 73 31.6"
+          stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.38" />
+
+    <!-- Middle Layer: Live Feed Streams & Signal Dot -->
+    <path d="M 29 44 L 63 51.5" stroke="url(#jf-stream-1)" stroke-width="8.5" stroke-linecap="round" />
+    <path d="M 29 61.5 L 51 66.5" stroke="url(#jf-stream-2)" stroke-width="8.5" stroke-linecap="round" opacity="0.92" />
+    <circle cx="33" cy="79" r="4.8" fill="#34D399" />
+
+    <!-- Foreground Layer: Crystal Discovery Lens -->
+    <circle cx="79" cy="70" r="20" fill="url(#jf-lens-glass)" />
+    <path d="M 66.5 60 A 15 15 0 0 1 87 57" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" opacity="0.88" />
+    <path d="M 97.5 88.5 L 110.5 101.5" stroke="url(#jf-lens-handle)" stroke-width="11" stroke-linecap="round" />
+    <circle cx="79" cy="70" r="23.5" stroke="url(#jf-lens-ring)" stroke-width="10" />
+
+    <!-- Signature Zotero Flow Discovery Spark -->
+    <path d="M 103 12 C 103 19.5 106.5 23 114 23 C 106.5 23 103 26.5 103 34 C 103 26.5 99.5 23 92 23 C 99.5 23 103 19.5 103 12 Z"
+          fill="url(#jf-spark)" />
+  </g>
+</svg>

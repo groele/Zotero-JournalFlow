@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" role="img" aria-label="Zotero JournalFlow">
+  <defs>
+    <linearGradient id="jft-folio" x1="2.5" y1="3" x2="15" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#4F46E5" />
+      <stop offset="100%" stop-color="#2563EB" />
+    </linearGradient>
+    <linearGradient id="jft-ring" x1="11" y1="9" x2="21" y2="19" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#06B6D4" />
+      <stop offset="100%" stop-color="#6366F1" />
+    </linearGradient>
+    <linearGradient id="jft-spark" x1="17" y1="2" x2="22" y2="7" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#F43F5E" />
+      <stop offset="100%" stop-color="#FB923C" />
+    </linearGradient>
+  </defs>
+  <path d="M 3 5.8 C 3 4 4.4 3 6.2 3.4 L 14.2 5.4 C 15.1 5.7 15.6 6.4 15.6 7.3 L 15.6 17.8 C 15.6 19.2 14.3 20 12.9 19.6 L 4.5 17.2 C 3.5 16.9 3 16 3 15 Z"
+        fill="url(#jft-folio)" />
+  <path d="M 5.6 8.3 L 12 9.8" stroke="#67E8F9" stroke-width="1.9" stroke-linecap="round" />
+  <path d="M 5.6 11.7 L 9.8 12.7" stroke="#BAE6FD" stroke-width="1.9" stroke-linecap="round" />
+  <circle cx="6.2" cy="15" r="1.05" fill="#34D399" />
+  <circle cx="15.2" cy="13.5" r="4.1" fill="#FFFFFF" fill-opacity="0.88" />
+  <path d="M 18.7 17 L 21.4 19.7" stroke="#4F46E5" stroke-width="2.4" stroke-linecap="round" />
+  <circle cx="15.2" cy="13.5" r="4.6" stroke="url(#jft-ring)" stroke-width="2.1" />
+  <path d="M 19.5 2 C 19.5 3.4 20.1 4 21.5 4 C 20.1 4 19.5 4.6 19.5 6 C 19.5 4.6 18.9 4 17.5 4 C 18.9 4 19.5 3.4 19.5 2 Z"
+        fill="url(#jft-spark)" />
+</svg>

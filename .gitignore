@@ -1,0 +1,10 @@
+node_modules/
+dist/
+*.xpi
+*.log
+__pycache__/
+.DS_Store
+Thumbs.db
+tsconfig.tsbuildinfo
+chrome/content/scripts/*.js
+SHA256SUMS.txt

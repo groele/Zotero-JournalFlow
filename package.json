@@ -1,0 +1,47 @@
+{
+  "name": "zotero-journalflow",
+  "version": "2.0.4",
+  "description": "Follow academic journals inside Zotero: browse recent papers, search title/abstract, recover missing abstracts, validate figures, translate, and import by DOI. Part of Zotero Flow.",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "engines": {
+    "node": ">=22.14"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "tsc": "tsc --noEmit",
+    "guard": "node --test scripts/architecture-guard.mjs",
+    "check:architecture": "node --test scripts/architecture-guard.mjs",
+    "build:bundle": "node scripts/build-source.mjs",
+    "version:bump": "node scripts/bump-version.mjs",
+    "build:xpi": "node scripts/package-xpi.mjs --update-feeds",
+    "package": "npm run version:bump && npm run typecheck && npm run guard && npm run build:bundle && npm run build:xpi",
+    "build": "npm run package",
+    "test:unit": "node --test tests/*.test.mjs",
+    "test:package": "node scripts/package-xpi.mjs --test",
+    "test": "npm run typecheck && npm run guard && npm run build:bundle && npm run test:unit && npm run test:package"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/groele/Zotero-JournalFlow.git"
+  },
+  "author": "groele",
+  "contributors": [
+    {
+      "name": "Lyz-623 (JournalLens v0.3.9)",
+      "url": "https://github.com/Lyz-623/JournalLens"
+    }
+  ],
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/groele/Zotero-JournalFlow/issues"
+  },
+  "homepage": "https://github.com/groele/Zotero-JournalFlow",
+  "devDependencies": {
+    "@types/node": "^22.13.0",
+    "esbuild": "^0.28.2",
+    "jsdom": "^26.0.0",
+    "typescript": "^5.9.3"
+  }
+}

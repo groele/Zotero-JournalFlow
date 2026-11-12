@@ -1,0 +1,19 @@
+{
+  "addons": {
+    "journalflow@groele.org": {
+      "updates": [
+        {
+          "version": "2.0.4",
+          "update_link": "https://github.com/groele/Zotero-JournalFlow/releases/download/v2.0.4/zotero-journalflow-2.0.4.xpi",
+          "update_hash": "sha512:fb19a72c3f1e217bb24124efd8be4f80574c936c38ad07f0d8ac216d907062dec0f85c1f595975efe44cfc98d61881a44218989162290cde54355cd388395ebf",
+          "applications": {
+            "zotero": {
+              "strict_min_version": "10.0",
+              "strict_max_version": "12.*"
+            }
+          }
+        }
+      ]
+    }
+  }
+}
