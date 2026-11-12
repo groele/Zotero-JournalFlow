@@ -1,6 +1,7 @@
 import type {
   ArticleFilterMode,
   ArticleFigure,
+  ArticleSortMode,
   FeedScope,
   JournalArticle,
   JournalFeedStatus,
@@ -40,6 +41,8 @@ export interface FeedViewState {
   figureObserver: IntersectionObserver | null;
   articleQuery: string;
   filterMode: ArticleFilterMode;
+  sortMode: ArticleSortMode;
+  focusedArticleKey: string | null;
   visibleLimit: number;
   loadGeneration: number;
   bulkTranslationRunning: boolean;
@@ -89,6 +92,8 @@ export function createFeedViewState(): FeedViewState {
     figureObserver: null,
     articleQuery: '',
     filterMode: 'all',
+    sortMode: 'newest',
+    focusedArticleKey: null,
     visibleLimit: 40,
     loadGeneration: 0,
     bulkTranslationRunning: false,

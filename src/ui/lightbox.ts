@@ -1,6 +1,7 @@
 import { dedupeFigures, figureCaptionText } from '../services/figures';
 import type { ArticleFigure } from '../types';
-import type { LightboxState } from './feedState';
+import { copyPlainText } from './citation';
+import { type FeedHostContext, type LightboxState, getString } from './feedState';
 
 function updateLightboxGeometry(doc: Document): void {
   const stage = doc.getElementById('lightbox-stage');
@@ -59,10 +60,51 @@ function resetLightboxView(doc: Document, state: LightboxState): void {
   updateLightboxTransform(doc, state);
 }
 
+function renderLightboxStrip(doc: Document, state: LightboxState): void {
+  const strip = doc.getElementById('lightbox-strip');
+  if (!strip) return;
+  strip.replaceChildren();
+  const single = state.lightboxFigures.length < 2;
+  strip.hidden = single;
+  if (single) return;
+
+  state.lightboxFigures.forEach((fig, idx) => {
+    const thumbBtn = doc.createElement('button');
+    thumbBtn.type = 'button';
+    thumbBtn.className = idx === state.lightboxIndex ? 'lightbox-thumb is-active' : 'lightbox-thumb';
+    thumbBtn.title = fig.label || `#${idx + 1}`;
+
+    const thumbImg = doc.createElement('img');
+    let fallback = 0;
+    thumbImg.alt = fig.label || '';
+    thumbImg.onerror = () => {
+      fallback++;
+      if (fallback < fig.urls.length) thumbImg.src = fig.urls[fallback];
+    };
+    thumbImg.src = fig.urls[0];
+    thumbBtn.appendChild(thumbImg);
+
+    const lbl = doc.createElement('span');
+    lbl.className = 'lightbox-thumb-label';
+    lbl.textContent = fig.label || `#${idx + 1}`;
+    thumbBtn.appendChild(lbl);
+
+    thumbBtn.addEventListener('click', () => {
+      state.lightboxIndex = idx;
+      renderLightboxFigure(doc, state);
+    });
+    strip.appendChild(thumbBtn);
+    if (idx === state.lightboxIndex) {
+      thumbBtn.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+    }
+  });
+}
+
 function renderLightboxFigure(doc: Document, state: LightboxState): void {
   const stage = doc.getElementById('lightbox-stage');
   const img = doc.getElementById('lightbox-img') as HTMLImageElement | null;
   const caption = doc.getElementById('lightbox-caption');
+  const counter = doc.getElementById('lightbox-counter');
   const figure = state.lightboxFigures[state.lightboxIndex];
   if (!stage || !img || !caption || !figure) return;
 
@@ -76,7 +118,11 @@ function renderLightboxFigure(doc: Document, state: LightboxState): void {
   img.onload = () => updateLightboxGeometry(doc);
   img.src = figure.urls[0];
   caption.textContent = figureCaptionText(figure);
+  if (counter) {
+    counter.textContent = `${state.lightboxIndex + 1} / ${state.lightboxFigures.length}`;
+  }
   resetLightboxView(doc, state);
+  renderLightboxStrip(doc, state);
 
   const single = state.lightboxFigures.length < 2;
   const prev = doc.getElementById('lightbox-prev') as HTMLButtonElement | null;
@@ -129,65 +175,67 @@ export function stepLightbox(doc: Document, state: LightboxState, delta: number)
   renderLightboxFigure(doc, state);
 }
 
-export function initLightbox(doc: Document, state: LightboxState, signal: AbortSignal): void {
+export function initLightbox(
+  doc: Document,
+  state: LightboxState,
+  signal: AbortSignal,
+  ctx?: FeedHostContext
+): void {
   const lightbox = doc.getElementById('lightbox');
   const stage = doc.getElementById('lightbox-stage');
-  const img = doc.getElementById('lightbox-img');
+  const img = doc.getElementById('lightbox-img') as HTMLImageElement | null;
   if (!lightbox || !stage || !img) return;
 
+  const S = (id: string) => (ctx ? getString(ctx, id) : id);
+  const currentUrl = () =>
+    img.src || state.lightboxFigures[state.lightboxIndex]?.urls[0] || '';
+
+  const openImgBtn = doc.getElementById('lightbox-open-btn') as HTMLButtonElement | null;
+  if (openImgBtn) {
+    openImgBtn.title = S('lightbox-open');
+    openImgBtn.addEventListener(
+      'click',
+      () => {
+        const target = currentUrl();
+        if (target) ctx?.JournalFlow.openURL?.(target);
+      },
+      { signal }
+    );
+  }
+
+  const copyUrlBtn = doc.getElementById('lightbox-copy-url-btn') as HTMLButtonElement | null;
+  if (copyUrlBtn) {
+    copyUrlBtn.textContent = S('lightbox-copy');
+    copyUrlBtn.addEventListener(
+      'click',
+      async () => {
+        const target = currentUrl();
+        if (!target) return;
+        if (await copyPlainText(target, doc)) {
+          copyUrlBtn.textContent = S('lightbox-copied');
+          (doc.defaultView || globalThis).setTimeout(() => {
+            copyUrlBtn.textContent = S('lightbox-copy');
+          }, 1400);
+        }
+      },
+      { signal }
+    );
+  }
+
   const win = doc.defaultView || globalThis;
-  doc.getElementById('lightbox-close')?.addEventListener(
-    'click',
-    () => {
-      lightbox.hidden = true;
-    },
-    { signal }
-  );
-  doc.getElementById('lightbox-prev')?.addEventListener('click', () => stepLightbox(doc, state, -1), {
-    signal,
+  const on = (id: string, fn: (e: Event) => void) => doc.getElementById(id)?.addEventListener('click', fn, { signal });
+  on('lightbox-close', () => { lightbox.hidden = true; });
+  on('lightbox-prev', () => stepLightbox(doc, state, -1));
+  on('lightbox-next', () => stepLightbox(doc, state, 1));
+  on('lightbox-nav-prev', (e) => { e.stopPropagation(); stepLightbox(doc, state, -1); });
+  on('lightbox-nav-next', (e) => { e.stopPropagation(); stepLightbox(doc, state, 1); });
+  on('lightbox-zoom-in', () => setLightboxZoom(doc, state, state.lightboxZoom * 1.25));
+  on('lightbox-zoom-out', () => setLightboxZoom(doc, state, state.lightboxZoom / 1.25));
+  on('lightbox-zoom-reset', () => resetLightboxView(doc, state));
+  on('lightbox-canvas-btn', () => {
+    state.lightboxLightCanvas = !state.lightboxLightCanvas;
+    applyCanvasBackdrop(doc, state);
   });
-  doc.getElementById('lightbox-next')?.addEventListener('click', () => stepLightbox(doc, state, 1), {
-    signal,
-  });
-  doc.getElementById('lightbox-nav-prev')?.addEventListener(
-    'click',
-    (e) => {
-      e.stopPropagation();
-      stepLightbox(doc, state, -1);
-    },
-    { signal }
-  );
-  doc.getElementById('lightbox-nav-next')?.addEventListener(
-    'click',
-    (e) => {
-      e.stopPropagation();
-      stepLightbox(doc, state, 1);
-    },
-    { signal }
-  );
-  doc.getElementById('lightbox-zoom-in')?.addEventListener(
-    'click',
-    () => setLightboxZoom(doc, state, state.lightboxZoom * 1.25),
-    { signal }
-  );
-  doc.getElementById('lightbox-zoom-out')?.addEventListener(
-    'click',
-    () => setLightboxZoom(doc, state, state.lightboxZoom / 1.25),
-    { signal }
-  );
-  doc.getElementById('lightbox-zoom-reset')?.addEventListener(
-    'click',
-    () => resetLightboxView(doc, state),
-    { signal }
-  );
-  doc.getElementById('lightbox-canvas-btn')?.addEventListener(
-    'click',
-    () => {
-      state.lightboxLightCanvas = !state.lightboxLightCanvas;
-      applyCanvasBackdrop(doc, state);
-    },
-    { signal }
-  );
 
   stage.addEventListener(
     'wheel',

@@ -3,6 +3,7 @@ export type UILanguageMode = 'auto' | UILanguage;
 export type WindowOpenMode = 'tab' | 'window';
 export type TranslateProvider = 'pdftranslate' | 'google' | 'mymemory' | 'openai';
 export type ArticleFilterMode = 'all' | 'oa' | 'abstract' | 'figures' | 'unread' | 'starred';
+export type ArticleSortMode = 'newest' | 'unread' | 'figures' | 'journal' | 'title';
 export type PresetPackId = 'top' | 'aps' | 'acs' | 'wiley' | 'springer' | 'rsc' | 'elsevier' | 'ieee';
 export type JournalFetchState = 'idle' | 'loading' | 'ok' | 'error';
 

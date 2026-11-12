@@ -4,7 +4,7 @@
   "capturedAt": "2026-11-12",
   "debtCleared": true,
   "note": "All source files in src/ must stay <= 360 lines with zero oversized debt.",
-  "lastReleasedVersion": "2.0.9",
+  "lastReleasedVersion": "3.0.0",
   "splitHistory": [
     {
       "version": "1.0.0",

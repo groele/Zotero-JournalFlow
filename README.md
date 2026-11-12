@@ -1,8 +1,17 @@
-# Zotero JournalFlow `v2.0.9`
+# Zotero JournalFlow `v3.0.0`
 
 **Zotero JournalFlow** is a modern Zotero 10–12 (`Gecko 140+ / 153+`) extension for tracking academic journals directly inside Zotero, refactored in strict TypeScript from [Lyz-623/JournalLens (`v0.3.9`)](https://github.com/Lyz-623/JournalLens) to follow the [Zotero Flow](https://github.com/groele) architecture, UI design language, and engineering quality standards.
 
 ---
+
+## What's New in `v3.0.0`
+
+- **Active Scope Banner & Live Workspace Telemetry**: Always see the active scope (*All Followed Journals*, publisher group, or journal + ISSN), live paper/unread/OA/starred breakdowns, filter pill counters, one-click **Mark all read**, **Reset filters**, search clear (`×`), and floating **Back to top** navigation.
+- **Multi-Mode Sorting**: Sort articles instantly by *Newest first*, *Unread first*, *Has figures first*, *Journal A–Z*, or *Title A–Z*.
+- **Bilingual Parallel Comparison & Quick DOI Copy**: Translated cards retain a compact stacked **Original Reference** block below the translated content for terminology cross-checking, plus one-click copyable `DOI` badges in card metadata.
+- **Pro Figure Lightbox (`Filmstrip + URL Actions`)**: Inspect multi-figure papers faster with a live `N / Total` counter, interactive thumbnail filmstrip, one-click **Copy URL**, and **Open Original Image**.
+- **Keyboard-First Academic Triage (`?`)**: Navigate cards with `j` / `k`, jump to search with `/`, open with `o` / `Enter`, import with `a`, translate with `t`, star with `s`, toggle read with `r`, batch-select with `x`, and press `?` anytime for the shortcut dialog.
+- **Redesigned Unbounded Dual-Wing SVG Branding**: Pixel-crisp `toolbar.svg` + layered dual-wing `icon.svg` and rasterized HiDPI icon set.
 
 ## Core Capabilities
 
@@ -22,7 +31,7 @@
 | Specification | Detail |
 |---|---|
 | **Addon ID** | `journalflow@groele.org` |
-| **Version** | `v2.0.9` |
+| **Version** | `v3.0.0` |
 | **Supported Zotero** | Zotero `10.0` – `12.*` (`Gecko 140+ / 153+`) |
 | **Build Stack** | Strict TypeScript (`ES2023`, `noEmit`) + `esbuild` (`firefox140` IIFE bundles) |
 | **Codebase Hygiene** | 100% TypeScript in `src/`, every module `<= 360` lines, Fluent `en-US` / `zh-CN` symmetry |
@@ -35,7 +44,7 @@
 ```bash
 npm install
 npm run test      # typecheck + architecture guard + esbuild bundle + unit tests + XPI self-test
-npm run package   # builds deterministic dist/zotero-journalflow-2.0.9.xpi and syncs update.json SHA-512
+npm run package   # builds deterministic dist/zotero-journalflow-3.0.0.xpi and syncs update.json SHA-512
 ```
 
 ---

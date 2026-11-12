@@ -3,15 +3,15 @@
 <head>
 	<title>Zotero JournalFlow</title>
 	<meta charset="utf-8"/>
-	<link rel="stylesheet" href="chrome://journalflow/content/styles/feed.css?v=2.0.9"/>
-	<script src="chrome://journalflow/content/scripts/feed.js?v=2.0.9" defer="defer"></script>
+	<link rel="stylesheet" href="chrome://journalflow/content/styles/feed.css?v=3.0.0"/>
+	<script src="chrome://journalflow/content/scripts/feed.js?v=3.0.0" defer="defer"></script>
 </head>
 <body>
 	<header id="topbar">
 		<div id="brand">
 			<img id="brand-icon" src="chrome://journalflow/content/icons/icon.svg" alt="" width="24" height="24"/>
 			<span id="brand-name">Zotero JournalFlow</span>
-			<span id="brand-version" class="brand-badge">v2.0.9</span>
+			<span id="brand-version" class="brand-badge">v3.0.0</span>
 		</div>
 		<div id="topbar-actions">
 			<span id="lang-label">Language</span>
@@ -88,16 +88,37 @@
 		<button id="sidebar-expand-btn" type="button" class="sidebar-rail-btn" hidden="hidden" title="Show sidebar"></button>
 
 		<main id="content">
-			<div id="feed-tools">
-				<input id="article-search-input" type="search" placeholder="Search title or abstract…"/>
-				<div id="filter-pills" class="filter-pills" role="group">
-					<button type="button" data-filter="all" id="filter-all-btn" class="active">All</button>
-					<button type="button" data-filter="oa" id="filter-oa-btn">OA</button>
-					<button type="button" data-filter="abstract" id="filter-abstract-btn">Has Abstract</button>
-					<button type="button" data-filter="figures" id="filter-figures-btn">Has Figures</button>
-					<button type="button" data-filter="unread" id="filter-unread-btn">Unread</button>
-					<button type="button" data-filter="starred" id="filter-starred-btn">Starred</button>
+			<section id="scope-banner" aria-live="polite">
+				<div class="scope-banner-main">
+					<h1 id="scope-banner-title">All journals</h1>
+					<div id="scope-banner-metrics"></div>
 				</div>
+				<div class="scope-banner-actions">
+					<button id="reset-filters-btn" type="button" hidden="hidden">Reset filters</button>
+					<button id="mark-scope-read-btn" type="button">Mark all read</button>
+					<button id="kbd-help-btn" type="button" aria-haspopup="dialog">?</button>
+				</div>
+			</section>
+			<div id="feed-tools">
+				<div class="article-search-wrap">
+					<input id="article-search-input" type="search" placeholder="Search title or abstract…"/>
+					<button id="article-search-clear" type="button" hidden="hidden">×</button>
+				</div>
+				<div id="filter-pills" class="filter-pills" role="group">
+					<button type="button" data-filter="all" id="filter-all-btn" class="active"><span class="filter-label">All</span><span class="filter-count" hidden="hidden"></span></button>
+					<button type="button" data-filter="oa" id="filter-oa-btn"><span class="filter-label">OA</span><span class="filter-count" hidden="hidden"></span></button>
+					<button type="button" data-filter="abstract" id="filter-abstract-btn"><span class="filter-label">Has Abstract</span><span class="filter-count" hidden="hidden"></span></button>
+					<button type="button" data-filter="figures" id="filter-figures-btn"><span class="filter-label">Has Figures</span><span class="filter-count" hidden="hidden"></span></button>
+					<button type="button" data-filter="unread" id="filter-unread-btn"><span class="filter-label">Unread</span><span class="filter-count" hidden="hidden"></span></button>
+					<button type="button" data-filter="starred" id="filter-starred-btn"><span class="filter-label">Starred</span><span class="filter-count" hidden="hidden"></span></button>
+				</div>
+				<select id="article-sort-select" aria-label="Sort">
+					<option value="newest" id="sort-opt-newest">Newest first</option>
+					<option value="unread" id="sort-opt-unread">Unread first</option>
+					<option value="figures" id="sort-opt-figures">Has figures first</option>
+					<option value="journal" id="sort-opt-journal">Journal A–Z</option>
+					<option value="title" id="sort-opt-title">Title A–Z</option>
+				</select>
 				<button id="translate-all-btn" type="button">Translate all</button>
 				<span id="article-search-count"></span>
 			</div>
@@ -111,6 +132,7 @@
 			<div id="status" hidden="hidden" role="status" aria-live="polite"></div>
 			<div id="notice" hidden="hidden" role="alert"></div>
 			<div id="cards"></div>
+			<button id="scroll-top-btn" type="button" hidden="hidden">↑</button>
 		</main>
 	</div>
 
@@ -118,6 +140,10 @@
 	<div id="lightbox" hidden="hidden">
 		<div id="lightbox-inner">
 			<div id="lightbox-toolbar">
+				<span id="lightbox-counter">1 / 1</span>
+				<span class="lightbox-toolbar-spacer"></span>
+				<button id="lightbox-open-btn" type="button">↗</button>
+				<button id="lightbox-copy-url-btn" type="button">Copy URL</button>
 				<button id="lightbox-canvas-btn" type="button">☀</button>
 				<button id="lightbox-prev" type="button">‹</button>
 				<button id="lightbox-zoom-out" type="button">−</button>
@@ -132,6 +158,18 @@
 				<button id="lightbox-nav-next" class="lightbox-nav" type="button">›</button>
 			</div>
 			<div id="lightbox-caption"></div>
+			<div id="lightbox-strip" hidden="hidden"></div>
+		</div>
+	</div>
+
+	<!-- Keyboard shortcut dialog -->
+	<div id="kbd-help-modal" hidden="hidden" role="dialog" aria-modal="true" aria-labelledby="kbd-help-title">
+		<div class="kbd-help-card">
+			<div class="kbd-help-head">
+				<h2 id="kbd-help-title">Keyboard Shortcuts</h2>
+				<button id="kbd-help-close" type="button">✕</button>
+			</div>
+			<ul id="kbd-help-list"></ul>
 		</div>
 	</div>
 </body>

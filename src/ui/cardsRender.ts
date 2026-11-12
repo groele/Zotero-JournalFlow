@@ -1,4 +1,4 @@
-import type { ArticleFilterMode, JournalArticle } from '../types';
+import type { JournalArticle } from '../types';
 import {
   type CardActionRefs,
   articleSelectionKey,
@@ -7,8 +7,11 @@ import {
   updateBatchBar,
 } from './cardActions';
 import { articleMatchesSearch, updateBulkTranslateButton } from './cardTranslation';
+import { copyPlainText } from './citation';
 import { type FeedHostContext, type FeedUIState, getString, populateCollectionSelector } from './feedState';
+import { articleMatchesFilterMode, sortArticles, updateFeedToolbar } from './feedToolbar';
 import { type CardElement, loadFiguresForCard, resetFigureObserver } from './figureStrip';
+import { syncFocusedCardClass } from './keyboardNav';
 import { openLightbox } from './lightbox';
 
 export interface CardDomBinding {
@@ -24,23 +27,6 @@ export function getCardBindings(state: FeedUIState): Map<JournalArticle, CardDom
   return cardBindings.get(state);
 }
 
-function articleMatchesFilter(article: JournalArticle, mode: ArticleFilterMode): boolean {
-  switch (mode) {
-    case 'oa':
-      return Boolean(article.isOpenAccess);
-    case 'abstract':
-      return Boolean(article.abstract);
-    case 'figures':
-      return Boolean(article.figures?.length);
-    case 'unread':
-      return !article._read;
-    case 'starred':
-      return Boolean(article._starred);
-    default:
-      return true;
-  }
-}
-
 function buildCard(
   doc: Document,
   ctx: FeedHostContext,
@@ -51,6 +37,7 @@ function buildCard(
   const card = doc.createElement('div') as CardElement;
   const selKey = articleSelectionKey(article);
   const selected = state.selectedKeys.has(selKey);
+  card.dataset.selKey = selKey;
   card.className = ['card', article._read ? 'is-read' : '', selected ? 'is-selected' : '']
     .filter(Boolean)
     .join(' ');
@@ -109,6 +96,26 @@ function buildCard(
     badge.className = 'badge-oa';
     badge.textContent = S('oa');
     metaEl.appendChild(badge);
+  }
+  if (article.doi) {
+    const doiBtn = doc.createElement('button');
+    doiBtn.type = 'button';
+    doiBtn.className = 'badge-doi';
+    const label = `DOI: ${article.doi}`;
+    doiBtn.textContent = label;
+    doiBtn.title = S('copy-doi');
+    doiBtn.addEventListener('click', async (event) => {
+      event.stopPropagation();
+      if (await copyPlainText(article.doi, doc)) {
+        doiBtn.textContent = S('copied-doi');
+        doiBtn.classList.add('is-copied');
+        (doc.defaultView || globalThis).setTimeout(() => {
+          doiBtn.textContent = label;
+          doiBtn.classList.remove('is-copied');
+        }, 1400);
+      }
+    });
+    metaEl.appendChild(doiBtn);
   }
   body.appendChild(metaEl);
 
@@ -189,14 +196,18 @@ export function renderArticles(doc: Document, ctx: FeedHostContext, state: FeedU
     state.primeTimer = null;
   }
 
-  const filtered = state.articles.filter(
-    (a) => articleMatchesFilter(a, state.filterMode) && articleMatchesSearch(a, state.articleQuery)
+  const filtered = sortArticles(
+    state.articles.filter(
+      (a) => articleMatchesFilterMode(a, state.filterMode) && articleMatchesSearch(a, state.articleQuery)
+    ),
+    state.sortMode
   );
   if (countEl) {
     const showCount = Boolean(state.articleQuery || state.filterMode !== 'all');
     countEl.textContent = showCount ? `${filtered.length} / ${state.articles.length}` : `${state.articles.length}`;
   }
   refreshFilterPills(doc, state);
+  updateFeedToolbar(doc, ctx, state);
   updateBulkTranslateButton(doc, ctx, state);
   updateBatchBar(doc, ctx, state);
   populateCollectionSelector(doc, ctx, state);
@@ -267,4 +278,5 @@ export function renderArticles(doc: Document, ctx: FeedHostContext, state: FeedU
   if (figCards.length) {
     pumpFigures(12, 60);
   }
+  syncFocusedCardClass(doc, state);
 }

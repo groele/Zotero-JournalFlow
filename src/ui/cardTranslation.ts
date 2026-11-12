@@ -58,6 +58,46 @@ export function updateBulkTranslateButton(
   btn.textContent = getString(ctx, allShown ? 'original-all' : 'translate-all');
 }
 
+function syncBilingualOriginalPanel(
+  doc: Document,
+  ctx: FeedHostContext,
+  article: JournalArticle,
+  titleEl: Element,
+  translated?: { title: string; abstract: string }
+): void {
+  const body = titleEl.closest('.card-body');
+  if (!body) return;
+  let panel = body.querySelector('.card-bilingual-orig') as HTMLDivElement | null;
+  if (!article._showTranslated || !translated) {
+    panel?.remove();
+    return;
+  }
+  if (!panel) {
+    panel = doc.createElement('div');
+    panel.className = 'card-bilingual-orig';
+    const anchor = body.querySelector('.figures, .card-actions');
+    if (anchor) body.insertBefore(panel, anchor);
+    else body.appendChild(panel);
+  }
+  panel.replaceChildren();
+  const tag = doc.createElement('span');
+  tag.className = 'bilingual-orig-tag';
+  const tagText = getString(ctx, 'bilingual-orig');
+  tag.textContent = tagText !== 'bilingual-orig' ? tagText : 'Original';
+
+  const origTitle = doc.createElement('div');
+  origTitle.className = 'bilingual-orig-title';
+  origTitle.textContent = article.title;
+  panel.append(tag, origTitle);
+
+  if (article.abstract) {
+    const origAbs = doc.createElement('p');
+    origAbs.className = 'bilingual-orig-abstract';
+    origAbs.textContent = article.abstract;
+    panel.appendChild(origAbs);
+  }
+}
+
 export function updateArticleText(
   doc: Document,
   ctx: FeedHostContext,
@@ -78,6 +118,7 @@ export function updateArticleText(
       state.articleQuery
     );
   }
+  syncBilingualOriginalPanel(doc, ctx, article, titleEl, translated);
   if (article._showTranslated) {
     btn.textContent = getString(ctx, 'original');
   } else {

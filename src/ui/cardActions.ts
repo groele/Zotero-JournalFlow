@@ -3,6 +3,7 @@ import type { JournalArticle } from '../types';
 import { ensureTranslation, toggleTranslate, updateArticleText } from './cardTranslation';
 import { copyPlainText, formatArticleBibTeX } from './citation';
 import { type FeedHostContext, type FeedUIState, getString, populateCollectionSelector, showNotice } from './feedState';
+import { updateFeedToolbar } from './feedToolbar';
 import type { CardElement } from './figureStrip';
 
 export interface CardActionRefs {
@@ -138,6 +139,7 @@ export function buildCardActions(
     refs.card.classList.toggle('is-read', value);
     readBtn.textContent = S(value ? 'read' : 'mark-read');
     void ctx.JournalFlow.setArticleRead?.(article, value)?.catch?.(() => {});
+    updateFeedToolbar(doc, ctx, state);
   };
 
   const addBtn = doc.createElement('button');
@@ -191,6 +193,7 @@ export function buildCardActions(
 
   const translateBtn = doc.createElement('button');
   translateBtn.type = 'button';
+  translateBtn.dataset.action = 'translate';
   updateArticleText(doc, ctx, state, article, refs.titleEl, refs.abstractEl, translateBtn);
   translateBtn.addEventListener('click', () => {
     void toggleTranslate(doc, ctx, state, article, refs.titleEl, refs.abstractEl, translateBtn);
@@ -252,12 +255,14 @@ export function buildCardActions(
     article._starred = next;
     starBtn.classList.toggle('starred', next);
     starBtn.textContent = S(next ? 'starred' : 'star');
+    updateFeedToolbar(doc, ctx, state);
     if (state.filterMode === 'starred' && !next) refs.rerender();
   });
   actions.appendChild(starBtn);
 
   const readBtn = doc.createElement('button');
   readBtn.type = 'button';
+  readBtn.dataset.action = 'read';
   readBtn.textContent = S(article._read ? 'read' : 'mark-read');
   readBtn.addEventListener('click', () => {
     const next = !article._read;

@@ -18,6 +18,8 @@ import {
   setScope,
   showNotice,
 } from './ui/feedState';
+import { applyToolbarStaticLabels, initFeedToolbar } from './ui/feedToolbar';
+import { initKeyboardNav, renderKeyboardHelpModal } from './ui/keyboardNav';
 import { initLightbox } from './ui/lightbox';
 import {
   initFollowedFilter,
@@ -35,6 +37,13 @@ function applyStaticLabels(doc: Document, ctx: FeedHostContext, state: FeedUISta
     const el = doc.getElementById(id);
     if (el) el.textContent = text;
   };
+  const setFilterLabel = (id: string, text: string) => {
+    const el = doc.getElementById(id);
+    if (!el) return;
+    const label = el.querySelector('.filter-label');
+    if (label) label.textContent = text;
+    else el.textContent = text;
+  };
   setText('lang-label', S('lang-label'));
   setText('refresh-btn', S('refresh'));
   setText('h-followed', S('followed'));
@@ -44,13 +53,15 @@ function applyStaticLabels(doc: Document, ctx: FeedHostContext, state: FeedUISta
   setText('lang-option-auto', S('lang-auto'));
   setText('lang-option-en', S('lang-en'));
   setText('lang-option-zh', S('lang-zh'));
-  setText('filter-all-btn', S('filter-all'));
-  setText('filter-oa-btn', S('filter-oa'));
-  setText('filter-abstract-btn', S('filter-abstract'));
-  setText('filter-figures-btn', S('filter-figures'));
-  setText('filter-unread-btn', S('filter-unread'));
-  setText('filter-starred-btn', S('filter-starred'));
+  setFilterLabel('filter-all-btn', S('filter-all'));
+  setFilterLabel('filter-oa-btn', S('filter-oa'));
+  setFilterLabel('filter-abstract-btn', S('filter-abstract'));
+  setFilterLabel('filter-figures-btn', S('filter-figures'));
+  setFilterLabel('filter-unread-btn', S('filter-unread'));
+  setFilterLabel('filter-starred-btn', S('filter-starred'));
   setText('collection-root-opt', S('collection-root'));
+  applyToolbarStaticLabels(doc, ctx);
+  renderKeyboardHelpModal(doc, ctx);
 
   doc.documentElement.dataset.windowMode =
     typeof ctx.JournalFlow.getWindowMode === 'function'
@@ -308,7 +319,9 @@ function initWorkbench(): void {
   initJournalSearch(doc, ctx, state, signal, reloadFeed, retrySingleJournal);
   initFollowedFilter(doc, ctx, state, signal, reloadFeed, retrySingleJournal);
   initSidebarChrome(doc, ctx, state, signal, reloadFeed, retrySingleJournal);
-  initLightbox(doc, state, signal);
+  initFeedToolbar(doc, ctx, state, signal, () => renderArticles(doc, ctx, state));
+  initKeyboardNav(doc, ctx, state, signal);
+  initLightbox(doc, state, signal, ctx);
   syncSidebarAndRefreshState();
   renderSidebarPresetsAndIO(doc, ctx, state, signal, reloadFeed, retrySingleJournal);
   reloadFeed();
