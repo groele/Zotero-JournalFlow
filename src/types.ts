@@ -142,6 +142,7 @@ export interface JournalFlowSubscriptionService {
   applyJournalPreset(packId: PresetPackId): JournalSubscription[];
   exportSubscriptionsJSON(): string;
   exportSubscriptionsToFile?(): Promise<{ saved: boolean; path?: string; canceled?: boolean; unavailable?: boolean }>;
+  importSubscriptionsFromFile?(): Promise<{ imported: boolean; journals?: JournalSubscription[]; path?: string; canceled?: boolean; unavailable?: boolean }>;
   importSubscriptionsJSON(raw: string): JournalSubscription[];
   searchJournals(query: string): Promise<JournalSubscription[]>;
   getJournalByISSN(issn: string): Promise<JournalSubscription>;

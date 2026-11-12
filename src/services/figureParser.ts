@@ -198,14 +198,12 @@ export function extractContainerURLs(container: Element, baseURL: string): strin
   const isHTMLFigurePage = (u: string) =>
     /\.html?(?:[?#].*)?$/i.test(u) ||
     /\/article\/.*\/figures?\/\d+\/?(?:[?#].*)?$/i.test(u) ||
-    /\/doi\/(?:abs|full|epdf|pdf)\//i.test(u);
+    /\/doi\/(?:abs|full|epdf|pdf)\//i.test(u) ||
+    /\baction=(?:showPopup|downloadCitation)\b/i.test(u);
   const isPotential = (u: string) =>
     !isHTMLFigurePage(u) &&
     (/\.(jpe?g|png|gif|webp|tiff?)([?#].*)?$/i.test(u) ||
-      /\/figures\/[^/]+\/(?:large|medium|thumbnail)\/?$/i.test(u) ||
-      /(fig(?:ure)?|extended|image|graphic|large|hi[-_]?res|high[-_]?res|full|download|original|zoom|_lrg)/i.test(
-        u
-      ));
+      /\/figures\/[^/]+\/(?:large|medium|original)\/?$/i.test(u));
 
   for (const link of Array.from(container.querySelectorAll('a[href]'))) {
     const resolved = resolveURL(baseURL, link.getAttribute('href'));

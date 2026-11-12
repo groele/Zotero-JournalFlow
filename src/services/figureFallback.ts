@@ -184,7 +184,7 @@ export function parseFallbackVisuals(
   metaURLs.push(...collectJSONLDImageURLs(doc, resolvedBase).flatMap(expandHighResURLs).filter(isAcceptableFallbackURL));
 
   const uniqueMeta = uniqueURLs(metaURLs);
-  if (uniqueMeta.length && out.length === 0) {
+  if (uniqueMeta.length && out.length < 2) {
     addFigure(out, seen, {
       label: 'Graphic Preview',
       caption: '',

@@ -1,11 +1,10 @@
-import type { JournalSubscription, PresetPackId } from '../types';
-import { type FeedHostContext, type FeedScopeState, type FeedUIState, getString, setScope, showNotice } from './feedState';
+import type { PresetPackId } from '../types';
+import { type FeedHostContext, type FeedScopeState, type FeedUIState, getString, showNotice } from './feedState';
+import { hideSearchResults, initJournalSearch } from './journalSearch';
 import { loadCollapsedPublishers, setButtonSvgIcon } from './sidebarIcons';
-import {
-  collapseAllPublishers,
-  expandAllPublishers,
-  renderJournalListTree,
-} from './sidebarTree';
+import { collapseAllPublishers, expandAllPublishers, renderJournalListTree } from './sidebarTree';
+
+export { hideSearchResults, initJournalSearch };
 
 const PRESETS: ReadonlyArray<{ id: PresetPackId; labelKey: string }> = [
   { id: 'top', labelKey: 'preset-top' },
@@ -167,6 +166,8 @@ export function renderSidebarPresetsAndIO(
   if (exportBtn) {
     exportBtn.textContent = S('export-subs');
     exportBtn.addEventListener('click', async () => {
+      if (exportBtn.disabled) return;
+      exportBtn.disabled = true;
       try {
         if (typeof ctx.JournalFlow.exportSubscriptionsToFile === 'function') {
           const res = await ctx.JournalFlow.exportSubscriptionsToFile();
@@ -174,7 +175,7 @@ export function renderSidebarPresetsAndIO(
             showNotice(doc, state, S('export-subs-ok').replace('{path}', res.path || 'journalflow-subscriptions.json'), 'warn');
             return;
           }
-          if (res?.canceled || !res?.unavailable) return;
+          if (res && (res.canceled || !res.unavailable)) return;
         }
         const json = ctx.JournalFlow.exportSubscriptionsJSON?.() || JSON.stringify(state.journals, null, 2);
         const BlobCtor = (doc.defaultView as any)?.Blob || globalThis.Blob;
@@ -191,13 +192,42 @@ export function renderSidebarPresetsAndIO(
         showNotice(doc, state, S('export-subs-ok').replace('{path}', 'journalflow-subscriptions.json'), 'warn');
       } catch {
         showNotice(doc, state, S('export-subs-err'), 'error');
+      } finally {
+        exportBtn.disabled = false;
       }
     }, { signal });
   }
 
+  const applyImported = (nextJournals: FeedUIState['journals']) => {
+    state.journals = nextJournals;
+    renderSidebar(doc, ctx, state, onChanged, onRetryJournal);
+    onChanged();
+    showNotice(doc, state, S('import-subs-ok').replace('{count}', String(state.journals.length)), 'warn');
+  };
+
   if (importBtn && fileInput) {
     importBtn.textContent = S('import-subs');
-    importBtn.addEventListener('click', () => fileInput.click(), { signal });
+    importBtn.addEventListener('click', async () => {
+      if (importBtn.disabled) return;
+      if (typeof ctx.JournalFlow.importSubscriptionsFromFile === 'function') {
+        importBtn.disabled = true;
+        try {
+          const res = await ctx.JournalFlow.importSubscriptionsFromFile();
+          if (res?.imported && res.journals) {
+            applyImported(res.journals);
+            return;
+          }
+          if (res && (res.canceled || !res.unavailable)) return;
+        } catch {
+          showNotice(doc, state, S('import-subs-err'), 'error');
+          return;
+        } finally {
+          importBtn.disabled = false;
+        }
+      }
+      fileInput.click();
+    }, { signal });
+
     fileInput.addEventListener(
       'change',
       async () => {
@@ -205,152 +235,12 @@ export function renderSidebarPresetsAndIO(
         fileInput.value = '';
         if (!file || typeof ctx.JournalFlow.importSubscriptionsJSON !== 'function') return;
         try {
-          const text = await file.text();
-          state.journals = ctx.JournalFlow.importSubscriptionsJSON(text);
-          renderSidebar(doc, ctx, state, onChanged, onRetryJournal);
-          onChanged();
-          showNotice(
-            doc,
-            state,
-            S('import-subs-ok').replace('{count}', String(state.journals.length)),
-            'warn'
-          );
+          applyImported(ctx.JournalFlow.importSubscriptionsJSON(await file.text()));
         } catch {
           showNotice(doc, state, S('import-subs-err'), 'error');
         }
       },
       { signal }
     );
-  }
-}
-
-export function hideSearchResults(doc: Document): void {
-  const results = doc.getElementById('journal-search-results');
-  if (!results) return;
-  results.hidden = true;
-  results.replaceChildren();
-}
-
-export function initJournalSearch(
-  doc: Document,
-  ctx: FeedHostContext,
-  state: FeedUIState,
-  signal: AbortSignal,
-  onFollow: () => void,
-  onRetryJournal?: (issn: string) => void
-): void {
-  const input = doc.getElementById('journal-search-input') as HTMLInputElement | null;
-  if (!input) return;
-
-  let searchTimer: ReturnType<typeof setTimeout> | null = null;
-  signal.addEventListener(
-    'abort',
-    () => {
-      if (searchTimer) clearTimeout(searchTimer);
-    },
-    { once: true }
-  );
-
-  input.addEventListener(
-    'input',
-    () => {
-      if (searchTimer) clearTimeout(searchTimer);
-      const query = input.value.trim();
-      if (!query) {
-        hideSearchResults(doc);
-        return;
-      }
-      searchTimer = setTimeout(() => {
-        void runJournalSearch(doc, ctx, state, query, signal, onFollow, onRetryJournal);
-      }, 400);
-    },
-    { signal }
-  );
-
-  input.addEventListener(
-    'keydown',
-    (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        hideSearchResults(doc);
-        input.blur();
-      }
-    },
-    { signal }
-  );
-
-  const addJournalBox = doc.getElementById('add-journal');
-  doc.addEventListener(
-    'click',
-    (event: MouseEvent) => {
-      if (addJournalBox && !addJournalBox.contains(event.target as Node)) {
-        hideSearchResults(doc);
-      }
-    },
-    { signal }
-  );
-}
-
-async function runJournalSearch(
-  doc: Document,
-  ctx: FeedHostContext,
-  state: FeedUIState,
-  query: string,
-  signal: AbortSignal,
-  onFollow: () => void,
-  onRetryJournal?: (issn: string) => void
-): Promise<void> {
-  if (signal.aborted) return;
-  const results = doc.getElementById('journal-search-results');
-  const input = doc.getElementById('journal-search-input') as HTMLInputElement | null;
-  if (!results) return;
-
-  const S = (id: string) => getString(ctx, id);
-  results.hidden = false;
-  results.replaceChildren();
-  const loadingLi = doc.createElement('li');
-  loadingLi.textContent = S('searching');
-  results.appendChild(loadingLi);
-
-  let found: JournalSubscription[] = [];
-  try {
-    if (/^\d{4}-?\d{3}[\dXx]$/.test(query)) {
-      const issn = (query.length === 8 ? `${query.slice(0, 4)}-${query.slice(4)}` : query).toUpperCase();
-      found = [await ctx.JournalFlow.getJournalByISSN(issn)];
-    } else {
-      found = await ctx.JournalFlow.searchJournals(query);
-    }
-  } catch (e) {
-    ctx.Zotero?.debug?.(`[JournalFlow] journal search failed: ${e}`);
-  }
-
-  if (signal.aborted) return;
-  results.replaceChildren();
-  if (!found.length) {
-    const empty = doc.createElement('li');
-    empty.textContent = S('no-results');
-    results.appendChild(empty);
-    return;
-  }
-
-  for (const journal of found) {
-    const item = doc.createElement('li');
-    const name = doc.createElement('span');
-    name.textContent = journal.title;
-    item.appendChild(name);
-
-    const publisher = doc.createElement('span');
-    publisher.className = 'publisher';
-    publisher.textContent = `${journal.publisher || ''} · ${journal.issn}`;
-    item.appendChild(publisher);
-
-    item.addEventListener('click', () => {
-      state.journals = ctx.JournalFlow.followJournal(journal);
-      if (input) input.value = '';
-      hideSearchResults(doc);
-      setScope(state, { type: 'issn', id: journal.issn });
-      renderSidebar(doc, ctx, state, onFollow, onRetryJournal);
-      onFollow();
-    });
-    results.appendChild(item);
   }
 }

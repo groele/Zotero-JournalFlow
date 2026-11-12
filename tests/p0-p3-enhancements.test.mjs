@@ -193,10 +193,11 @@ test('BibTeX citation formatting and subscription preset packs + JSON import wor
   assert.deepEqual(toPlain(parsed[0].altIssns), ['1520-5126']);
 });
 
-test('exportSubscriptionsWithPicker lets the user choose a save path via native FilePicker and handles cancellation', async () => {
-  const written = new Map();
+test('exportSubscriptionsWithPicker & importSubscriptionsWithPicker use native FilePicker and handle cancellation', async () => {
+  const files = new Map([['D:/Exports/in-journals.json', JSON.stringify([{ issn: '0028-0836', title: 'Nature' }])]]);
   let pickerAction = 'ok';
   class MockFilePicker {
+    modeOpen = 0;
     modeSave = 1;
     returnOK = 0;
     returnReplace = 2;
@@ -209,22 +210,32 @@ test('exportSubscriptionsWithPicker lets the user choose a save path via native 
     appendFilter() {}
     async show() {
       if (pickerAction === 'cancel') return this.returnCancel;
-      this.file = 'D:/Exports/my-journals.json';
+      this.file = this.mode === this.modeSave ? 'D:/Exports/my-journals.json' : 'D:/Exports/in-journals.json';
       return this.returnOK;
     }
   }
   const subs = loadTsModule('src/host/subscriptions.ts', {
     Zotero: { getMainWindow: () => ({ id: 'main' }) },
     ChromeUtils: { importESModule: () => ({ FilePicker: MockFilePicker }) },
-    IOUtils: { writeUTF8: async (p, content) => written.set(p, content) },
+    IOUtils: {
+      writeUTF8: async (p, content) => files.set(p, content),
+      readUTF8: async (p) => files.get(p),
+    },
   });
   const okRes = await subs.exportSubscriptionsWithPicker('{"journals":[]}', 'Export JSON');
   assert.deepEqual(toPlain(okRes), { saved: true, path: 'D:/Exports/my-journals.json' });
-  assert.equal(written.get('D:/Exports/my-journals.json'), '{"journals":[]}');
+  assert.equal(files.get('D:/Exports/my-journals.json'), '{"journals":[]}');
+
+  const inOk = await subs.importSubscriptionsWithPicker('Import JSON');
+  assert.equal(inOk.imported, true);
+  assert.equal(inOk.path, 'D:/Exports/in-journals.json');
+  assert.match(inOk.raw, /0028-0836/);
 
   pickerAction = 'cancel';
   const cancelRes = await subs.exportSubscriptionsWithPicker('{"journals":[]}', 'Export JSON');
   assert.deepEqual(toPlain(cancelRes), { saved: false, canceled: true });
+  const inCancel = await subs.importSubscriptionsWithPicker('Import JSON');
+  assert.deepEqual(toPlain(inCancel), { imported: false, canceled: true });
 });
 
 test('zoteroImport creates native journalArticle item on translator failure and looks up existing library DOIs', async () => {
@@ -390,7 +401,11 @@ test('feed.js guards stale journal switches via loadGeneration, filters pills, b
       getUILanguageMode: () => 'auto',
       setUILanguage: () => {},
       getWindowMode: () => 'tab',
-      getString: (id) => (id === 'export-subs-ok' ? 'Exported: {path}' : id),
+      getString: (id) => {
+        if (id === 'export-subs-ok') return 'Exported: {path}';
+        if (id === 'import-subs-ok') return 'Imported {count}';
+        return id;
+      },
       getPref: (k) => (k === 'loadFigures' ? false : true),
       getJournals: () => [
         { issn: '0028-0836', title: 'Nature', publisher: 'Springer Nature' },
@@ -408,6 +423,14 @@ test('feed.js guards stale journal switches via loadGeneration, filters pills, b
       getExistingLibraryDOIs: async () => ({}),
       getUserCollections: () => ({ collections: [{ id: 42, name: 'AI Papers' }], activeCollectionID: 42 }),
       exportSubscriptionsToFile: async () => ({ saved: true, path: 'D:/Exports/sub-test.json' }),
+      importSubscriptionsFromFile: async () => ({
+        imported: true,
+        path: 'D:/Exports/in-test.json',
+        journals: [
+          { issn: '0028-0836', title: 'Nature', publisher: 'Springer Nature' },
+          { issn: '0036-8075', title: 'Science', publisher: 'AAAS' },
+        ],
+      }),
       importArticleToZotero: async (article, opts) => {
         batchImported.push({ doi: article.doi, collectionID: opts.collectionID });
         return { itemID: 500, usedFallback: false };
@@ -480,6 +503,12 @@ test('feed.js guards stale journal switches via loadGeneration, filters pills, b
   const notice = doc.getElementById('notice');
   assert.equal(notice.hidden, false);
   assert.match(notice.textContent, /D:\/Exports\/sub-test\.json/);
+
+  // Import JSON button uses native FilePicker helper and reports imported journal count
+  doc.getElementById('import-subs-btn').click();
+  await flushMicrotasks(20);
+  assert.equal(notice.hidden, false);
+  assert.match(notice.textContent, /Imported 2/);
 });
 
 test('zoteroImport auto-creates journal-named collections on first import, reuses existing ones, respects parent scopes, and guards concurrency', async () => {
@@ -625,4 +654,79 @@ test('zoteroImport auto-creates journal-named collections on first import, reuse
   const listed = zi.getUserCollections();
   assert.ok(listed.collections.some((c) => c.id === jfRoot.id && c.name === 'Zotero-JournalFlow'));
   assert.ok(listed.collections.some((c) => c.id === jacsSub.id && c.name === '  JACS'));
+});
+
+test('loadFiguresForCard invalidates stale empty figures when background enrichment adds pmcid and accepts scientific SVGs', async () => {
+  const dom = new JSDOM('<!DOCTYPE html><html><body><div id="cards"></div></body></html>', {
+    url: 'https://journalflow.local/feed.xhtml',
+  });
+  const doc = dom.window.document;
+  const mockXML = `
+    <article xmlns:xlink="http://www.w3.org/1999/xlink">
+      <fig><label>Fig. 1</label><caption>Device schematic</caption><graphic xlink:href="https://arxiv.org/html/2610.16091v1/scheme1.svg"/></fig>
+    </article>
+  `;
+  const figStrip = loadTsModule('src/ui/figureStrip.ts', {
+    Image: class MockImage {
+      set src(val) {
+        this._src = val;
+        // Simulate a viewBox-only SVG whose naturalWidth/Height report 0 in Firefox
+        setTimeout(() => {
+          this.naturalWidth = 0;
+          this.naturalHeight = 0;
+          this.onload?.();
+        }, 5);
+      }
+      get src() {
+        return this._src;
+      }
+    },
+  });
+
+  const article = {
+    doi: '10.48550/arXiv.2610.16091',
+    title: 'Layered Ferroelectric',
+    authors: 'A. Researcher',
+    journal: 'Nature Physics',
+    issn: '1745-2473',
+    date: '2026-11-12',
+    abstract: '',
+    url: 'https://doi.org/10.48550/arXiv.2610.16091',
+    fullTextLinks: [],
+    pmcid: null,
+    figures: null,
+    graphicalAbstract: null,
+  };
+  const ctx = {
+    Zotero: { debug: () => {} },
+    JournalFlow: {
+      getString: (id) => id,
+      getVisualSourcePages: async () => [],
+      fetchArticleHTML: async () => ({ text: '', url: '' }),
+      fetchFullTextXML: async (pmcid) => (pmcid === 'PMC888' ? mockXML : ''),
+    },
+  };
+
+  const cards = doc.getElementById('cards');
+  const makeCard = () => {
+    const card = doc.createElement('div');
+    const figs = doc.createElement('div');
+    card.appendChild(figs);
+    card._article = article;
+    card._figuresEl = figs;
+    cards.replaceChildren(card);
+    return card;
+  };
+
+  // Initial pass without pmcid settles article.figures = []
+  await figStrip.loadFiguresForCard(doc, ctx, makeCard(), () => {});
+  assert.deepEqual(toPlain(article.figures), []);
+
+  // Background enrichment discovers pmcid later -> new card pass detects changed visual source signature and renders SVG figure
+  article.pmcid = 'PMC888';
+  const card2 = makeCard();
+  await figStrip.loadFiguresForCard(doc, ctx, card2, () => {});
+  assert.equal(article.figures.length, 1);
+  assert.equal(card2._figuresEl.hidden, false);
+  assert.equal(card2._figuresEl.querySelectorAll('.figure-item img').length, 1);
 });

@@ -99,3 +99,35 @@ test('parseEuropePMCFallbackFigures & parseFallbackVisuals recover graphical abs
   assert.equal(fb.length, 1);
   assert.deepEqual(toPlain(fb[0].urls), ['https://cdn.example.org/paper-toc.png']);
 });
+
+test('isUsefulImageURL preserves scientific terms, allows scientific SVGs, adds PMC NCBI CDN, and drops viewer popup links', () => {
+  // Scientific words containing 'icon' / 'share' / scientific SVGs must NOT be false-positived
+  assert.equal(figures.isUsefulImageURL('https://cdn.example.org/silicon_device_fig1.png'), true);
+  assert.equal(figures.isUsefulImageURL('https://cdn.example.org/semiconductor_band_figure.svg'), true);
+  assert.equal(figures.isUsefulImageURL('https://arxiv.org/html/2610.16091v1/shared_phase.png'), true);
+  assert.equal(figures.isUsefulImageURL('https://arxiv.org/html/2610.16091v1/x1.svg'), true);
+
+  // Noise logos, favicons, share buttons, and non-figure SVGs must still be blocked
+  assert.equal(figures.isUsefulImageURL('https://cdn.example.org/assets/site-logo.png'), false);
+  assert.equal(figures.isUsefulImageURL('https://cdn.example.org/icons/share_icon.png'), false);
+  assert.equal(figures.isUsefulImageURL('https://cdn.example.org/favicon.ico'), false);
+  assert.equal(figures.isUsefulImageURL('https://cdn.example.org/assets/orcid.svg'), false);
+
+  // Modern pmc.ncbi.nlm.nih.gov mirror included in PMC candidate URLs
+  const pmcUrls = figures.figureImageURLs('PMC123456', 'fig1.gif');
+  assert.ok(pmcUrls.includes('https://pmc.ncbi.nlm.nih.gov/articles/PMC123456/bin/fig1.jpg'));
+
+  // HTML viewer popup links inside <figure> should be ignored in favor of real <img>
+  const html = `
+    <html><body><article>
+      <figure>
+        <a href="/action/showPopup?citid=fig1">View full size</a>
+        <img src="/cms/asset/fig1.png" alt="Figure 1" />
+        <figcaption>Figure 1: Gate tunable superconductivity.</figcaption>
+      </figure>
+    </article></body></html>
+  `;
+  const parsed = parser.parsePublisherVisuals(html, 'https://journals.example.org/doi/10.1000/1');
+  assert.equal(parsed.length, 1);
+  assert.deepEqual(toPlain(parsed[0].urls), ['https://journals.example.org/cms/asset/fig1.png']);
+});

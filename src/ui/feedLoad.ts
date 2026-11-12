@@ -73,6 +73,9 @@ function patchAbstractCard(
 function patchMetadataCard(doc: Document, ctx: FeedHostContext, state: FeedUIState, article: JournalArticle): void {
   const binding = getCardBindings(state)?.get(article);
   if (!binding) return;
+  if (article.figures !== null && article.figures.length === 0 && (article.pmcid || article.fullTextLinks?.length)) {
+    article.figures = null;
+  }
   if (article.isOpenAccess && !binding.refs.metaEl.querySelector('.badge-oa')) {
     const badge = doc.createElement('span');
     badge.className = 'badge-oa';

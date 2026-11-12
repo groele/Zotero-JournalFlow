@@ -1,6 +1,6 @@
 import { ADDON_ID, ADDON_VERSION, CACHE_SCHEMA, DEFAULT_JOURNALS_JSON, LEGACY_PREF_BRANCH, PREF_BRANCH, PREF_DEFAULTS, UI_STRINGS } from './config';
 import { FeedCoordinator } from './host/feedCoordinator';
-import { applyPresetPack, backfillSubscriptions, exportSubscriptionsWithPicker, mergeSubscriptions, parseSubscriptionsImport } from './host/subscriptions';
+import { applyPresetPack, backfillSubscriptions, exportSubscriptionsWithPicker, importSubscriptionsWithPicker, mergeSubscriptions, parseSubscriptionsImport } from './host/subscriptions';
 import { WindowHostManager } from './host/windowManager';
 import { addToZoteroByDOI, getExistingLibraryDOIs, getUserCollections, importArticleToZotero, openExternalURL, openPreferencesPane, selectLibraryItem } from './host/zoteroImport';
 import { DailyFeedCacheStore, localDateKey } from './services/cache';
@@ -164,6 +164,12 @@ export class JournalFlowHost implements JournalFlowService {
 
   exportSubscriptionsToFile() {
     return exportSubscriptionsWithPicker(this.exportSubscriptionsJSON(), this.getString('export-subs'));
+  }
+
+  async importSubscriptionsFromFile() {
+    const picked = await importSubscriptionsWithPicker(this.getString('import-subs'));
+    if (!picked.imported || !picked.raw) return picked;
+    return { imported: true, path: picked.path, journals: this.importSubscriptionsJSON(picked.raw) };
   }
 
   importSubscriptionsJSON(raw: string): JournalSubscription[] {

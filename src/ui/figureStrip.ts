@@ -19,6 +19,20 @@ export interface CardElement extends HTMLDivElement {
 }
 
 const figureFetchGate = createSemaphore(4);
+const sourceSigByArticle = new WeakMap<JournalArticle, string>();
+const hostTimeouts = new Map<string, number>();
+
+function visualSourceSignature(article: JournalArticle): string {
+  return [article.pmcid || '', article.url || '', ...(article.fullTextLinks || [])].join('|');
+}
+
+function hostKeyOf(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return '';
+  }
+}
 
 export function resetFigureObserver(
   doc: Document,
@@ -49,10 +63,15 @@ export function resetFigureObserver(
 
 function probeImageURL(
   url: string,
-  timeout = 6000
-): Promise<{ url: string; width: number; height: number } | null> {
+  timeout = 4500
+): Promise<{ url: string; width: number; height: number; timedOut?: boolean } | null> {
   return new Promise((resolve) => {
     if (!isUsefulImageURL(url)) {
+      resolve(null);
+      return;
+    }
+    const host = hostKeyOf(url);
+    if (host && (hostTimeouts.get(host) || 0) >= 3) {
       resolve(null);
       return;
     }
@@ -61,7 +80,7 @@ function probeImageURL(
       img.referrerPolicy = 'no-referrer';
     }
     let settled = false;
-    const finish = (result: { url: string; width: number; height: number } | null) => {
+    const finish = (result: { url: string; width: number; height: number; timedOut?: boolean } | null) => {
       if (settled) return;
       settled = true;
       clearTimeout(timer);
@@ -69,20 +88,29 @@ function probeImageURL(
       img.onerror = null;
       resolve(result);
     };
-    const timer = setTimeout(() => finish(null), timeout);
-    img.onload = () =>
+    const timer = setTimeout(() => {
+      if (host) hostTimeouts.set(host, (hostTimeouts.get(host) || 0) + 1);
+      finish({ url, width: 0, height: 0, timedOut: true });
+    }, timeout);
+    img.onload = () => {
+      if (host) hostTimeouts.delete(host);
       finish({
         url,
         width: img.naturalWidth || img.width || 0,
         height: img.naturalHeight || img.height || 0,
       });
+    };
     img.onerror = () => finish(null);
     img.src = url;
   });
 }
 
-function figureImageLooksUsable(image: { width: number; height: number } | null): boolean {
-  if (!image || !image.width || !image.height) return false;
+function figureImageLooksUsable(image: { url: string; width: number; height: number } | null): boolean {
+  if (!image) return false;
+  if ((!image.width || !image.height) && /\.svg(?:[?#]|$)/i.test(image.url)) {
+    return isUsefulImageURL(image.url);
+  }
+  if (!image.width || !image.height) return false;
   const maxEdge = Math.max(image.width, image.height);
   const minEdge = Math.min(image.width, image.height);
   return maxEdge >= 160 && minEdge >= 64 && image.width * image.height >= 14000;
@@ -92,9 +120,16 @@ async function validateFigure(figure: ArticleFigure): Promise<ArticleFigure | nu
   const clean = cleanFigure(figure);
   if (!clean) return null;
   let bestLoad: { url: string; width: number; height: number } | null = null;
+  const timedOutHosts = new Set<string>();
   for (const url of clean.urls.slice(0, 6)) {
+    const host = hostKeyOf(url);
+    if (host && timedOutHosts.has(host)) continue;
     const image = await probeImageURL(url);
     if (!image) continue;
+    if (image.timedOut) {
+      if (host) timedOutHosts.add(host);
+      continue;
+    }
     bestLoad = bestLoad || image;
     if (figureImageLooksUsable(image)) {
       return {
@@ -108,6 +143,7 @@ async function validateFigure(figure: ArticleFigure): Promise<ArticleFigure | nu
   if (
     bestLoad &&
     figureImageLooksUsable({
+      url: bestLoad.url,
       width: Math.max(bestLoad.width, clean.width || 0),
       height: Math.max(bestLoad.height, clean.height || 0),
     })
@@ -208,7 +244,12 @@ export async function loadFiguresForCard(
   await figureFetchGate.run(async () => {
     if (!card.isConnected) return;
     try {
+      const currentSig = visualSourceSignature(article);
+      if (article.figures !== null && article.figures.length === 0 && sourceSigByArticle.get(article) !== currentSig) {
+        article.figures = null;
+      }
       if (article.figures === null) {
+        sourceSigByArticle.set(article, currentSig);
         let allFigures: ArticleFigure[] = [];
         if (article.pmcid) {
           try {

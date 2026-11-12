@@ -66,6 +66,43 @@ export async function exportSubscriptionsWithPicker(
   return { saved: true, path: filePath };
 }
 
+export async function importSubscriptionsWithPicker(
+  title: string,
+  parentWin?: any
+): Promise<{ imported: boolean; raw?: string; path?: string; canceled?: boolean; unavailable?: boolean }> {
+  const FilePickerCtor = loadFilePickerCtor();
+  if (!FilePickerCtor) {
+    return { imported: false, unavailable: true };
+  }
+  const win =
+    parentWin ||
+    (typeof Zotero !== 'undefined' ? Zotero.getMainWindow?.() : null) ||
+    (typeof Services !== 'undefined' ? Services.wm?.getMostRecentWindow?.('navigator:browser') : null) ||
+    (globalThis as any);
+  const fp = new FilePickerCtor();
+  fp.init(win, title, fp.modeOpen);
+  fp.defaultExtension = 'json';
+  fp.appendFilter?.('JSON (*.json)', '*.json');
+  const result = await fp.show();
+  if (result !== fp.returnOK) {
+    return { imported: false, canceled: true };
+  }
+  const rawPath = fp.file;
+  const filePath = typeof rawPath === 'string' ? rawPath : String(rawPath?.path || '');
+  if (!filePath) {
+    throw new Error('No import path selected');
+  }
+  let raw = '';
+  if (typeof IOUtils !== 'undefined' && typeof IOUtils.readUTF8 === 'function') {
+    raw = await IOUtils.readUTF8(filePath);
+  } else if (typeof Zotero !== 'undefined' && typeof Zotero.File?.getContentsAsync === 'function') {
+    raw = await Zotero.File.getContentsAsync(filePath);
+  } else {
+    throw new Error('File read API unavailable');
+  }
+  return { imported: true, raw: String(raw || ''), path: filePath };
+}
+
 export function sanitizeSubscription(raw: unknown): JournalSubscription | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;

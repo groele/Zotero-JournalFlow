@@ -47,6 +47,20 @@ test('translateText integrates windingwind/zotero-pdf-translate first and falls 
   });
   const res2 = await txFallback.translateText('Quantum Hall Effect', 'zh', 'pdftranslate');
   assert.equal(res2, '谷歌回退翻译标题');
+
+  // Fallback when Zotero.PDFTranslate echoes unchanged source text
+  const txEcho = loadTsModule('src/services/translation.ts', {
+    fetch: mockFetch,
+    Zotero: {
+      PDFTranslate: {
+        api: {
+          translate: async (text) => ({ result: text }),
+        },
+      },
+    },
+  });
+  const res3 = await txEcho.translateText('Quantum Hall Effect', 'zh', 'pdftranslate');
+  assert.equal(res3, '谷歌回退翻译标题');
 });
 
 test('DailyFeedCacheStore persists via IOUtils, invalidates by ISSN, and strips transient UI fields', async () => {

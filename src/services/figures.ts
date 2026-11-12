@@ -13,14 +13,17 @@ import { expandHighResURLs } from './publisherUrls';
 
 export { expandHighResURLs };
 
+const NOISE_IMAGE_TOKEN_RE =
+  /(?:^|[/_.\-])(?:logos?|icons?|avatars?|profile|sprites?|spinners?|loader|pixel|tracking|advert|banner|share|facebook|twitter|wechat|weibo|creativecommons|orcid)(?:$|[/_.\-?&=])/i;
+const ALLOW_SVG_FIGURE_RE =
+  /(?:arxiv\.org\/html\/|\/bin\/|ltx_|scheme|chart|figure|fig[-_]?\d)/i;
+
 export function isUsefulImageURL(url: string | null | undefined): boolean {
   if (!url || /^data:/i.test(url)) return false;
-  if (/\.(svg|ico)([?#].*)?$/i.test(url)) return false;
-  if (
-    /(logo|icon|avatar|profile|sprite|spinner|loader|pixel|tracking|advert|banner|share|facebook|twitter|wechat|weibo|creativecommons|orcid)/i.test(
-      url
-    )
-  ) {
+  if (/\.ico([?#].*)?$/i.test(url)) return false;
+  if (/favicon|apple-touch-icon/i.test(url)) return false;
+  if (NOISE_IMAGE_TOKEN_RE.test(url)) return false;
+  if (/\.svg([?#].*)?$/i.test(url) && !ALLOW_SVG_FIGURE_RE.test(url)) {
     return false;
   }
   return true;
@@ -191,6 +194,7 @@ export function figureImageURLs(pmcid: string, graphicHref: string): string[] {
   for (const name of variants) {
     if (!name) continue;
     urls.push(`https://europepmc.org/articles/${pmcid}/bin/${name}`);
+    urls.push(`https://pmc.ncbi.nlm.nih.gov/articles/${pmcid}/bin/${name}`);
     urls.push(`https://www.ncbi.nlm.nih.gov/pmc/articles/${pmcid}/bin/${name}`);
   }
   return uniqueURLs(urls);

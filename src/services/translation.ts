@@ -147,8 +147,8 @@ async function translateViaPDFTranslate(
   if (!translated) {
     translated = extract(await api.translate(text));
   }
-  if (!translated) {
-    throw new Error('Empty response from Zotero PDF Translate');
+  if (!translated || translated === text.trim()) {
+    throw new Error('Empty or unchanged response from Zotero PDF Translate');
   }
   if (src !== target && detectLang(translated) !== target) {
     throw new Error(`Zotero PDF Translate target language mismatch (expected ${target})`);
