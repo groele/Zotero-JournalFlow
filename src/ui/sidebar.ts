@@ -1,5 +1,6 @@
 import type { JournalSubscription, PresetPackId } from '../types';
 import { type FeedHostContext, type FeedScopeState, type FeedUIState, getString, setScope, showNotice } from './feedState';
+import { loadCollapsedPublishers, setButtonSvgIcon } from './sidebarIcons';
 import {
   collapseAllPublishers,
   expandAllPublishers,
@@ -34,9 +35,7 @@ function setSidebarCollapsed(doc: Document, collapsed: boolean): void {
   if (expandBtn) expandBtn.hidden = !collapsed;
   try {
     doc.defaultView?.sessionStorage?.setItem('journalflow.sidebarCollapsed', collapsed ? '1' : '0');
-  } catch {
-    // sessionStorage may be unavailable in some chrome contexts
-  }
+  } catch {}
 }
 
 export function initSidebarChrome(
@@ -47,6 +46,7 @@ export function initSidebarChrome(
   onSelectFeed: () => void,
   onRetryJournal?: (issn: string) => void
 ): void {
+  loadCollapsedPublishers(doc, state);
   const S = (id: string) => getString(ctx, id);
   const collapsePubs = doc.getElementById('collapse-publishers-btn') as HTMLButtonElement | null;
   const expandPubs = doc.getElementById('expand-publishers-btn') as HTMLButtonElement | null;
@@ -56,11 +56,11 @@ export function initSidebarChrome(
   if (collapsePubs) {
     collapsePubs.title = S('collapse-all-publishers');
     collapsePubs.setAttribute('aria-label', collapsePubs.title);
-    collapsePubs.textContent = '▾';
+    setButtonSvgIcon(doc, collapsePubs, 'collapse-all');
     collapsePubs.addEventListener(
       'click',
       () => {
-        collapseAllPublishers(state);
+        collapseAllPublishers(state, doc);
         renderSidebar(doc, ctx, state, onSelectFeed, onRetryJournal);
       },
       { signal }
@@ -69,11 +69,11 @@ export function initSidebarChrome(
   if (expandPubs) {
     expandPubs.title = S('expand-all-publishers');
     expandPubs.setAttribute('aria-label', expandPubs.title);
-    expandPubs.textContent = '▸';
+    setButtonSvgIcon(doc, expandPubs, 'expand-all');
     expandPubs.addEventListener(
       'click',
       () => {
-        expandAllPublishers(state);
+        expandAllPublishers(state, doc);
         renderSidebar(doc, ctx, state, onSelectFeed, onRetryJournal);
       },
       { signal }
@@ -82,21 +82,16 @@ export function initSidebarChrome(
   if (hideSidebar) {
     hideSidebar.title = S('hide-sidebar');
     hideSidebar.setAttribute('aria-label', hideSidebar.title);
+    setButtonSvgIcon(doc, hideSidebar, 'panel-collapse');
     hideSidebar.addEventListener('click', () => setSidebarCollapsed(doc, true), { signal });
   }
   if (showSidebar) {
     showSidebar.title = S('show-sidebar');
     showSidebar.setAttribute('aria-label', showSidebar.title);
+    setButtonSvgIcon(doc, showSidebar, 'panel-expand');
     showSidebar.addEventListener('click', () => setSidebarCollapsed(doc, false), { signal });
   }
-
-  let restored = false;
-  try {
-    restored = doc.defaultView?.sessionStorage?.getItem('journalflow.sidebarCollapsed') === '1';
-  } catch {
-    restored = false;
-  }
-  setSidebarCollapsed(doc, restored);
+  setSidebarCollapsed(doc, false);
 }
 
 export function initFollowedFilter(

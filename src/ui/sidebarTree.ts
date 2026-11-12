@@ -1,6 +1,7 @@
 import { groupJournalsByPublisher } from '../services/publisherNormalize';
-import type { FeedScope, JournalFeedStatus, JournalSubscription } from '../types';
+import type { JournalFeedStatus, JournalSubscription } from '../types';
 import { type FeedHostContext, type FeedScopeState, getString, setScope } from './feedState';
+import { createSidebarSvg, saveCollapsedPublishers } from './sidebarIcons';
 
 export function publisherDisplayName(ctx: FeedHostContext, canonical: string): string {
   if (canonical === 'Other') {
@@ -39,22 +40,7 @@ function appendActionSlot(doc: Document, parent: HTMLElement): void {
 }
 
 function createChevronSvg(doc: Document): Element {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = doc.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 16 16');
-  svg.setAttribute('width', '14');
-  svg.setAttribute('height', '14');
-  svg.setAttribute('aria-hidden', 'true');
-  svg.setAttribute('class', 'chevron-icon');
-  const path = doc.createElementNS(ns, 'path');
-  path.setAttribute('d', 'M4 6l4 4 4-4');
-  path.setAttribute('fill', 'none');
-  path.setAttribute('stroke', 'currentColor');
-  path.setAttribute('stroke-width', '1.6');
-  path.setAttribute('stroke-linecap', 'round');
-  path.setAttribute('stroke-linejoin', 'round');
-  svg.appendChild(path);
-  return svg;
+  return createSidebarSvg(doc, 'chevron-down', 'chevron-icon');
 }
 
 function formatStatusTime(timestamp?: number): string {
@@ -116,7 +102,12 @@ function matchesFollowedQuery(journal: JournalSubscription, query: string): bool
 
 const justExpandedByState = new WeakMap<FeedScopeState, string>();
 
-function togglePublisherCollapsed(state: FeedScopeState, canonical: string, collapse: boolean): void {
+function togglePublisherCollapsed(
+  state: FeedScopeState,
+  canonical: string,
+  collapse: boolean,
+  doc?: Document
+): void {
   const next = new Set(state.collapsedPublishers);
   if (collapse) {
     next.add(canonical);
@@ -126,18 +117,21 @@ function togglePublisherCollapsed(state: FeedScopeState, canonical: string, coll
     justExpandedByState.set(state, canonical);
   }
   state.collapsedPublishers = next;
+  if (doc) saveCollapsedPublishers(doc, state);
 }
 
-export function collapseAllPublishers(state: FeedScopeState): void {
+export function collapseAllPublishers(state: FeedScopeState, doc?: Document): void {
   justExpandedByState.delete(state);
   state.collapsedPublishers = new Set(
     groupJournalsByPublisher(state.journals).map((group) => group.publisher)
   );
+  if (doc) saveCollapsedPublishers(doc, state);
 }
 
-export function expandAllPublishers(state: FeedScopeState): void {
+export function expandAllPublishers(state: FeedScopeState, doc?: Document): void {
   justExpandedByState.delete(state);
   state.collapsedPublishers = new Set();
+  if (doc) saveCollapsedPublishers(doc, state);
 }
 
 export function renderJournalListTree(
@@ -154,14 +148,20 @@ export function renderJournalListTree(
   const S = (id: string) => getString(ctx, id);
   const scope = state.activeScope;
   const filterQuery = (state.followedFilterQuery || '').trim().toLowerCase();
+  const countBadge = doc.getElementById('followed-count-badge');
+  if (countBadge) countBadge.textContent = String(state.journals.length);
 
   const allItem = doc.createElement('li');
   allItem.className = 'all-journals-node';
   allItem.classList.toggle('active', scope.type === 'all');
+  const allWrap = doc.createElement('span');
+  allWrap.className = 'name-wrap';
+  allWrap.appendChild(createSidebarSvg(doc, 'all-journals', 'all-journals-icon'));
   const allName = doc.createElement('span');
   allName.className = 'name';
   allName.textContent = S('all-journals');
-  allItem.appendChild(allName);
+  allWrap.appendChild(allName);
+  allItem.appendChild(allWrap);
   appendStatusSlot(doc, allItem);
   const loadedTotal = Object.values(state.journalCounts).reduce((sum, n) => sum + n, 0);
   appendCountBadge(doc, allItem, loadedTotal > 0 ? loadedTotal : state.journals.length);
@@ -191,21 +191,33 @@ export function renderJournalListTree(
   for (const group of groups) {
     const canonical = group.publisher;
     const collapsed = !filterQuery && state.collapsedPublishers.has(canonical);
+    const hasLoading = group.journals.some((j) => state.journalStatus?.[j.issn]?.state === 'loading');
+    const hasError = group.journals.some((j) => state.journalStatus?.[j.issn]?.state === 'error');
+    const isPubActive = scope.type === 'publisher' && scope.id === canonical;
+    const hasActiveChild = scope.type === 'issn' && group.journals.some((j) => j.issn === scope.id);
+
+    const groupItem = doc.createElement('li');
+    groupItem.className = 'publisher-group';
+    groupItem.dataset.publisher = canonical;
+    groupItem.classList.toggle('is-collapsed', collapsed);
+    groupItem.classList.toggle('is-expanded', !collapsed);
+    groupItem.classList.toggle('is-active-group', isPubActive || hasActiveChild);
+
+    const cardList = doc.createElement('ul');
+    cardList.className = 'publisher-card';
 
     const pubLi = doc.createElement('li');
     pubLi.className = 'publisher-node';
     pubLi.classList.toggle('is-collapsed', collapsed);
     pubLi.classList.toggle('is-expanded', !collapsed);
-    pubLi.classList.toggle('active', scope.type === 'publisher' && scope.id === canonical);
-    const hasLoading = group.journals.some((j) => state.journalStatus?.[j.issn]?.state === 'loading');
-    const hasError = group.journals.some((j) => state.journalStatus?.[j.issn]?.state === 'error');
+    pubLi.classList.toggle('active', isPubActive);
     pubLi.classList.toggle('is-loading', hasLoading);
     pubLi.classList.toggle('has-error', hasError);
 
     const pubName = doc.createElement('span');
     pubName.className = 'name';
     pubName.textContent = publisherDisplayName(ctx, canonical);
-    pubName.title = pubName.textContent;
+    pubName.title = `${pubName.textContent} (${group.journals.length})`;
     pubLi.appendChild(pubName);
     appendStatusSlot(doc, pubLi);
     appendCountBadge(doc, pubLi, publisherGroupCount(group.journals, state.journalCounts));
@@ -218,7 +230,7 @@ export function renderJournalListTree(
     toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     toggle.appendChild(createChevronSvg(doc));
     const applyAccordion = (nextCollapsed: boolean) => {
-      togglePublisherCollapsed(state, canonical, nextCollapsed);
+      togglePublisherCollapsed(state, canonical, nextCollapsed, doc);
       if (!nextCollapsed) {
         setScope(state, { type: 'publisher', id: canonical });
         renderJournalListTree(doc, ctx, state, onSelectFeed, onRetryJournal);
@@ -237,7 +249,7 @@ export function renderJournalListTree(
     pubLi.addEventListener('click', () => {
       applyAccordion(!collapsed);
     });
-    list.appendChild(pubLi);
+    cardList.appendChild(pubLi);
 
     const lastIdx = group.journals.length - 1;
     group.journals.forEach((journal, idx) => {
@@ -246,6 +258,7 @@ export function renderJournalListTree(
       if (idx === lastIdx) li.classList.add('is-group-end');
       if (!collapsed && justExpanded === canonical) li.classList.add('is-just-expanded');
       li.hidden = collapsed;
+      li.classList.toggle('is-folded', collapsed);
       const jStatus = state.journalStatus?.[journal.issn];
       if (jStatus?.state) {
         li.dataset.fetchState = jStatus.state;
@@ -289,7 +302,10 @@ export function renderJournalListTree(
         renderJournalListTree(doc, ctx, state, onSelectFeed, onRetryJournal);
         onSelectFeed();
       });
-      list.appendChild(li);
+      cardList.appendChild(li);
     });
+
+    groupItem.appendChild(cardList);
+    list.appendChild(groupItem);
   }
 }

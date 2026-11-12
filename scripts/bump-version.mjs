@@ -120,6 +120,10 @@ export function bumpRepoVersion(root = DEFAULT_ROOT, args = []) {
       `$1${nextVersion}$2`,
       'chrome/content/feed.xhtml'
     );
+    feedXhtml = feedXhtml.replace(
+      /(\/(?:feed\.css|feed\.js)\?v=)\d+\.\d+\.\d+/g,
+      `$1${nextVersion}`
+    );
     fs.writeFileSync(feedPath, feedXhtml, 'utf8');
   }
 

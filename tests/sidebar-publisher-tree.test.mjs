@@ -6,6 +6,7 @@ import { loadTsModule } from './helpers.mjs';
 const pub = loadTsModule('src/services/publisherNormalize.ts');
 const { setScope, createInitialFeedState } = loadTsModule('src/ui/feedState.ts');
 const { renderJournalListTree } = loadTsModule('src/ui/sidebarTree.ts');
+const { initSidebarChrome } = loadTsModule('src/ui/sidebar.ts');
 
 test('groupJournalsByPublisher clusters mixed and empty publishers under Other', () => {
   const journals = [
@@ -92,4 +93,60 @@ test('renderJournalListTree smoke: publisher nodes and journal children in DOM',
   springerNow?.querySelector('button.publisher-toggle')?.click();
   assert.equal(doc.querySelectorAll('#journal-list li.journal-node[hidden]').length, 1);
   assert.equal(reloads, reloadsBeforeCollapse);
+  assert.equal(doc.querySelectorAll('#journal-list li.publisher-group > ul.publisher-card').length, 2);
+});
+
+test('initSidebarChrome wires SVG toolbar actions, collapse/expand all, and sidebar rail', () => {
+  const dom = new JSDOM(
+    `<!DOCTYPE html><html><body>
+      <div id="layout">
+        <aside id="sidebar">
+          <span id="followed-count-badge"></span>
+          <button id="collapse-publishers-btn" type="button"></button>
+          <button id="expand-publishers-btn" type="button"></button>
+          <button id="sidebar-collapse-btn" type="button"></button>
+          <ul id="journal-list"></ul>
+        </aside>
+        <button id="sidebar-expand-btn" type="button" hidden="hidden"></button>
+      </div>
+    </body></html>`,
+    { url: 'http://localhost/' }
+  );
+  const doc = dom.window.document;
+  const state = createInitialFeedState();
+  state.journals = [
+    { issn: '0028-0836', title: 'Nature', publisher: 'Nature Publishing Group' },
+    { issn: '0036-8075', title: 'Science', publisher: 'AAAS' },
+  ];
+  const ctx = {
+    JournalFlow: {
+      getString: (id) => id,
+      unfollowJournal: (issn) => state.journals.filter((j) => j.issn !== issn),
+    },
+  };
+  const ac = new dom.window.AbortController();
+  initSidebarChrome(doc, ctx, state, ac.signal, () => {});
+  renderJournalListTree(doc, ctx, state, () => {});
+
+  assert.equal(doc.getElementById('followed-count-badge')?.textContent, '2');
+  assert.ok(doc.querySelector('#collapse-publishers-btn > svg'));
+  assert.ok(doc.querySelector('#expand-publishers-btn > svg'));
+
+  doc.getElementById('collapse-publishers-btn')?.click();
+  assert.equal(doc.querySelectorAll('#journal-list li.publisher-group.is-collapsed').length, 2);
+  assert.equal(doc.querySelectorAll('#journal-list li.journal-node.is-folded').length, 2);
+  assert.ok(dom.window.sessionStorage.getItem('journalflow.collapsedPublishers')?.includes('AAAS'));
+
+  doc.getElementById('expand-publishers-btn')?.click();
+  assert.equal(doc.querySelectorAll('#journal-list li.publisher-group.is-collapsed').length, 0);
+  assert.equal(doc.querySelectorAll('#journal-list li.journal-node.is-folded').length, 0);
+
+  doc.getElementById('sidebar-collapse-btn')?.click();
+  assert.equal(doc.getElementById('layout')?.classList.contains('is-sidebar-collapsed'), true);
+  assert.equal(doc.getElementById('sidebar-expand-btn')?.hidden, false);
+
+  doc.getElementById('sidebar-expand-btn')?.click();
+  assert.equal(doc.getElementById('layout')?.classList.contains('is-sidebar-collapsed'), false);
+  assert.equal(doc.getElementById('sidebar-expand-btn')?.hidden, true);
+  ac.abort();
 });

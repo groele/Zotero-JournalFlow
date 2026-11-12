@@ -3,15 +3,15 @@
 <head>
 	<title>Zotero JournalFlow</title>
 	<meta charset="utf-8"/>
-	<link rel="stylesheet" href="chrome://journalflow/content/styles/feed.css"/>
-	<script src="chrome://journalflow/content/scripts/feed.js" defer="defer"></script>
+	<link rel="stylesheet" href="chrome://journalflow/content/styles/feed.css?v=2.0.6"/>
+	<script src="chrome://journalflow/content/scripts/feed.js?v=2.0.6" defer="defer"></script>
 </head>
 <body>
 	<header id="topbar">
 		<div id="brand">
 			<img id="brand-icon" src="chrome://journalflow/content/icons/icon.svg" alt="" width="24" height="24"/>
 			<span id="brand-name">Zotero JournalFlow</span>
-			<span id="brand-version" class="brand-badge">v2.0.4</span>
+			<span id="brand-version" class="brand-badge">v2.0.6</span>
 		</div>
 		<div id="topbar-actions">
 			<span id="lang-label">Language</span>
@@ -26,24 +26,40 @@
 
 	<div id="layout">
 		<aside id="sidebar">
-			<div id="add-journal">
+			<div id="add-journal" class="sidebar-panel-card">
 				<h2 id="h-add">Follow a journal</h2>
-				<input id="journal-search-input" class="sidebar-field" type="text" placeholder="Journal name or ISSN…"/>
+				<div class="sidebar-search-wrap">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" class="sidebar-search-icon" aria-hidden="true">
+						<circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+						<path d="M10.4 10.4L13.5 13.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+					</svg>
+					<input id="journal-search-input" class="sidebar-field" type="text" placeholder="Journal name or ISSN…"/>
+				</div>
 				<ul id="journal-search-results" hidden="hidden"></ul>
 			</div>
 
-			<div id="followed-header" class="sidebar-section-toolbar">
-				<h2 id="h-followed">Followed journals</h2>
-				<div class="followed-toolbar" role="group">
-					<button id="collapse-publishers-btn" type="button" class="sidebar-tool-btn" title="Collapse all">▾</button>
-					<button id="expand-publishers-btn" type="button" class="sidebar-tool-btn" title="Expand all">▸</button>
-					<button id="sidebar-collapse-btn" type="button" class="sidebar-tool-btn" title="Hide sidebar">⟨</button>
+			<section id="followed-section">
+				<div id="followed-header" class="sidebar-section-toolbar">
+					<div class="sidebar-title-group">
+						<h2 id="h-followed">Followed journals</h2>
+						<span id="followed-count-badge" class="sidebar-count-pill"></span>
+					</div>
+					<div class="followed-toolbar" role="group">
+						<button id="collapse-publishers-btn" type="button" class="sidebar-tool-btn" title="Collapse all"></button>
+						<button id="expand-publishers-btn" type="button" class="sidebar-tool-btn" title="Expand all"></button>
+						<button id="sidebar-collapse-btn" type="button" class="sidebar-tool-btn" title="Hide sidebar"></button>
+					</div>
 				</div>
-			</div>
-			<input id="followed-filter-input" class="sidebar-field" type="search" placeholder="Filter followed journals…"/>
-			<ul id="journal-list"></ul>
+				<div class="sidebar-search-wrap sidebar-filter-wrap">
+					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" class="sidebar-search-icon" aria-hidden="true">
+						<path d="M2.5 4h11M4.5 8h7M6.5 12h3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+					</svg>
+					<input id="followed-filter-input" class="sidebar-field" type="search" placeholder="Filter followed journals…"/>
+				</div>
+				<ul id="journal-list"></ul>
+			</section>
 
-			<details id="presets-section" class="sidebar-collapsible">
+			<details id="presets-section" class="sidebar-collapsible sidebar-panel-card">
 				<summary class="sidebar-section-header">
 					<span id="h-presets">Starter packs</span>
 					<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" class="section-chevron" aria-hidden="true">
@@ -54,7 +70,7 @@
 			</details>
 
 			<div id="subs-io-footer">
-				<details class="sidebar-collapsible" open="open">
+				<details class="sidebar-collapsible sidebar-panel-card">
 					<summary class="sidebar-section-header">
 						<span id="h-subs-io">Subscriptions</span>
 						<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="14" height="14" class="section-chevron" aria-hidden="true">
@@ -69,7 +85,7 @@
 				</details>
 			</div>
 		</aside>
-		<button id="sidebar-expand-btn" type="button" class="sidebar-rail-btn" hidden="hidden" title="Show sidebar">⟩</button>
+		<button id="sidebar-expand-btn" type="button" class="sidebar-rail-btn" hidden="hidden" title="Show sidebar"></button>
 
 		<main id="content">
 			<div id="feed-tools">
