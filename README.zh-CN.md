@@ -1,4 +1,4 @@
-# Zotero JournalFlow `v2.0.8`
+# Zotero JournalFlow `v2.0.9`
 
 **Zotero JournalFlow** 是一款专为 **Zotero 10–12**（`Gecko 140+ / 153+`）打造的现代化学术期刊订阅与文献发现插件，基于开源项目 [Lyz-623/JournalLens (`v0.3.9`)](https://github.com/Lyz-623/JournalLens) 按照 **Zotero Flow** 套件工程架构、视觉规范与质量标准全面重构。
 
@@ -22,7 +22,7 @@
 | 项目 | 规范说明 |
 |---|---|
 | **插件 ID** | `journalflow@groele.org` |
-| **当前版本** | `v2.0.8` |
+| **当前版本** | `v2.0.9` |
 | **宿主兼容** | Zotero `10.0` – `12.*`（`Gecko 140+ / 153+`） |
 | **构建体系** | TypeScript (`ES2023`, `strict`) + `esbuild` (`firefox140` IIFE，禁混淆保留可读堆栈) |
 | **代码规范** | `src/` 全量 TypeScript、单文件严格 `<= 360` 行、Fluent `en-US` / `zh-CN` 键值严格对称 |
@@ -35,7 +35,7 @@
 ```bash
 npm install
 npm run test      # 静态类型检查 + 架构守卫 + esbuild 打包 + 单元测试 + XPI 确定性自检
-npm run package   # 输出 dist/zotero-journalflow-2.0.8.xpi 并自动回写 update.json SHA-512 校验
+npm run package   # 输出 dist/zotero-journalflow-2.0.9.xpi 并自动回写 update.json SHA-512 校验
 ```
 
 ---

@@ -1,62 +1,78 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none" role="img" aria-labelledby="jf-title jf-desc">
   <title id="jf-title">Zotero JournalFlow</title>
-  <desc id="jf-desc">Open academic journal wing with live feed streams, crystal discovery lens, and Zotero Flow spark.</desc>
+  <desc id="jf-desc">Open academic journal spread with live stream lines, figure card, emerald bookmark ribbon, and Zotero Flow spark.</desc>
   <defs>
-    <linearGradient id="jf-folio" x1="16" y1="18" x2="82" y2="106" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#4F46E5" />
-      <stop offset="55%" stop-color="#2563EB" />
+    <linearGradient id="jf-left-wing" x1="14" y1="22" x2="62" y2="106" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#6366F1" />
+      <stop offset="52%" stop-color="#3B82F6" />
       <stop offset="100%" stop-color="#1D4ED8" />
     </linearGradient>
-    <linearGradient id="jf-stream-1" x1="30" y1="43" x2="64" y2="50" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#A5F3FC" />
+    <linearGradient id="jf-right-wing" x1="66" y1="104" x2="112" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="55%" stop-color="#0EA5E9" />
       <stop offset="100%" stop-color="#22D3EE" />
     </linearGradient>
-    <linearGradient id="jf-stream-2" x1="30" y1="61" x2="54" y2="66" gradientUnits="userSpaceOnUse">
+    <linearGradient id="jf-ribbon" x1="57" y1="84" x2="71" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#34D399" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="jf-line-1" x1="24" y1="44" x2="52" y2="54" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E0F2FE" />
+      <stop offset="100%" stop-color="#67E8F9" />
+    </linearGradient>
+    <linearGradient id="jf-line-2" x1="24" y1="60" x2="52" y2="70" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#BAE6FD" />
-      <stop offset="100%" stop-color="#38BDF8" />
+      <stop offset="100%" stop-color="#7DD3FC" />
     </linearGradient>
-    <linearGradient id="jf-lens-glass" x1="62" y1="50" x2="102" y2="90" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.92" />
-      <stop offset="100%" stop-color="#E0F2FE" stop-opacity="0.72" />
+    <linearGradient id="jf-chart" x1="3" y1="16" x2="25" y2="4" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2563EB" />
+      <stop offset="100%" stop-color="#06B6D4" />
     </linearGradient>
-    <linearGradient id="jf-lens-ring" x1="58" y1="46" x2="106" y2="94" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#06B6D4" />
-      <stop offset="55%" stop-color="#0EA5E9" />
-      <stop offset="100%" stop-color="#6366F1" />
-    </linearGradient>
-    <linearGradient id="jf-lens-handle" x1="98" y1="86" x2="115" y2="103" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#6366F1" />
-      <stop offset="100%" stop-color="#4338CA" />
-    </linearGradient>
-    <linearGradient id="jf-spark" x1="92" y1="12" x2="114" y2="34" gradientUnits="userSpaceOnUse">
+    <linearGradient id="jf-spark" x1="97" y1="3" x2="121" y2="27" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#F43F5E" />
       <stop offset="100%" stop-color="#FB923C" />
     </linearGradient>
-    <filter id="jf-ambient" x="-18%" y="-18%" width="136%" height="136%">
-      <feDropShadow dx="0" dy="6" stdDeviation="5.5" flood-color="#0F172A" flood-opacity="0.18" />
+    <filter id="jf-shadow" x="-16%" y="-16%" width="132%" height="136%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.16" />
     </filter>
   </defs>
 
-  <g filter="url(#jf-ambient)">
-    <!-- Back Layer: Swept Unbounded Journal Folio -->
-    <path d="M 16 32 C 16 21 25 15 36 18 L 75 28 C 79.5 29.2 82 32.8 82 37.5 L 82 95 C 82 102.5 75 107 67.5 104.8 L 24.5 92.6 C 19.2 91.1 16 86.5 16 81 Z"
-          fill="url(#jf-folio)" />
-    <path d="M 22 27 C 26 22 32 21 39 22.8 L 73 31.6"
+  <g filter="url(#jf-shadow)">
+    <!-- Center Bookmark Ribbon (Peeking cleanly beneath the journal spine) -->
+    <path d="M 57 88 L 71 88 L 71 115.5 C 71 117.5 68.7 118.6 67.2 117.2 L 64 114.1 L 60.8 117.2 C 59.3 118.6 57 117.5 57 115.5 Z"
+          fill="url(#jf-ribbon)" />
+
+    <!-- Left Open Journal Wing -->
+    <path d="M 14 35.5 C 14 27.8 21.8 23.2 28.9 26.1 L 52.8 36 C 58.1 38.2 61.5 43.3 61.5 49 L 61.5 101.5 C 61.5 105.8 57.1 108.5 53.2 106.7 L 23.1 92.8 C 17.6 90.2 14 84.7 14 78.6 Z"
+          fill="url(#jf-left-wing)" />
+    <path d="M 20.5 32.2 C 23.5 30 27.2 30.2 31.5 32 L 52.5 40.8"
           stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.38" />
 
-    <!-- Middle Layer: Live Feed Streams & Signal Dot -->
-    <path d="M 29 44 L 63 51.5" stroke="url(#jf-stream-1)" stroke-width="8.5" stroke-linecap="round" />
-    <path d="M 29 61.5 L 51 66.5" stroke="url(#jf-stream-2)" stroke-width="8.5" stroke-linecap="round" opacity="0.92" />
-    <circle cx="33" cy="79" r="4.8" fill="#34D399" />
+    <!-- Left Page Live Paper Stream Lines -->
+    <path d="M 24.5 48.5 L 50.5 58" stroke="url(#jf-line-1)" stroke-width="6.5" stroke-linecap="round" />
+    <path d="M 24.5 64.5 L 49.5 73.6" stroke="url(#jf-line-2)" stroke-width="6.5" stroke-linecap="round" opacity="0.92" />
+    <path d="M 24.5 80.5 L 39.5 86" stroke="#A5F3FC" stroke-width="6.5" stroke-linecap="round" opacity="0.82" />
 
-    <!-- Foreground Layer: Crystal Discovery Lens -->
-    <circle cx="79" cy="70" r="20" fill="url(#jf-lens-glass)" />
-    <path d="M 66.5 60 A 15 15 0 0 1 87 57" stroke="#FFFFFF" stroke-width="3.2" stroke-linecap="round" opacity="0.88" />
-    <path d="M 97.5 88.5 L 110.5 101.5" stroke="url(#jf-lens-handle)" stroke-width="11" stroke-linecap="round" />
-    <circle cx="79" cy="70" r="23.5" stroke="url(#jf-lens-ring)" stroke-width="10" />
+    <!-- Right Open Journal Wing (Soaring azure flow wing) -->
+    <path d="M 66.5 49 C 66.5 43.3 69.9 38.2 75.2 36 L 99.1 26.1 C 106.2 23.2 114 27.8 114 35.5 L 114 78.6 C 114 84.7 110.4 90.2 104.9 92.8 L 74.8 106.7 C 70.9 108.5 66.5 105.8 66.5 101.5 Z"
+          fill="url(#jf-right-wing)" />
+    <path d="M 75.5 40.8 L 96.5 32 C 100.8 30.2 104.5 30 107.5 32.2"
+          stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.45" />
 
-    <!-- Signature Zotero Flow Discovery Spark -->
-    <path d="M 103 12 C 103 19.5 106.5 23 114 23 C 106.5 23 103 26.5 103 34 C 103 26.5 99.5 23 92 23 C 99.5 23 103 19.5 103 12 Z"
+    <!-- Right Page Embedded Figure Card (skewed accurately around card top-left origin) -->
+    <g transform="translate(75.5 52.5) skewY(-20)">
+      <rect x="0" y="0" width="29" height="21" rx="5.5" fill="#FFFFFF" fill-opacity="0.94" />
+      <path d="M 5 14.5 L 11 8 L 16.5 12 L 23.5 5.5"
+            stroke="url(#jf-chart)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="23.5" cy="5.5" r="2.2" fill="#0EA5E9" />
+    </g>
+
+    <!-- Right Page Caption Flow Bars -->
+    <path d="M 76.5 83.5 L 102.5 74" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.9" />
+    <path d="M 76.5 95 L 91.5 89.5" stroke="#BAE6FD" stroke-width="5.5" stroke-linecap="round" opacity="0.85" />
+
+    <!-- Signature Zotero Flow Discovery Spark (Clear breathing space above wing) -->
+    <path d="M 109 3 C 109 10.5 112.5 14 120 14 C 112.5 14 109 17.5 109 25 C 109 17.5 105.5 14 98 14 C 105.5 14 109 10.5 109 3 Z"
           fill="url(#jf-spark)" />
   </g>
 </svg>

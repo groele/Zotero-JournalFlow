@@ -3,9 +3,9 @@
     "journalflow@groele.org": {
       "updates": [
         {
-          "version": "2.0.8",
-          "update_link": "https://github.com/groele/Zotero-JournalFlow/releases/download/v2.0.8/zotero-journalflow-2.0.8.xpi",
-          "update_hash": "sha512:b50e86c02aec9fba01c2a3c36203dd0c53bb49d092ed71f7334b5b16e0fe7624e298ab7dbe8d4df4e3479d28028dcb307e4ead41fe92850672015c54547be2fb",
+          "version": "2.0.9",
+          "update_link": "https://github.com/groele/Zotero-JournalFlow/releases/download/v2.0.9/zotero-journalflow-2.0.9.xpi",
+          "update_hash": "sha512:aabb4ac1b27d1fcc56793f58446ce8399025119be616ecef332d83624d112220faa249c42b04da20ab3c4ea2b87a5b1eddd81ae688d7845997efc64d76543768",
           "applications": {
             "zotero": {
               "strict_min_version": "10.0",

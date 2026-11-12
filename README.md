@@ -1,4 +1,4 @@
-# Zotero JournalFlow `v2.0.8`
+# Zotero JournalFlow `v2.0.9`
 
 **Zotero JournalFlow** is a modern Zotero 10–12 (`Gecko 140+ / 153+`) extension for tracking academic journals directly inside Zotero, refactored in strict TypeScript from [Lyz-623/JournalLens (`v0.3.9`)](https://github.com/Lyz-623/JournalLens) to follow the [Zotero Flow](https://github.com/groele) architecture, UI design language, and engineering quality standards.
 
@@ -22,7 +22,7 @@
 | Specification | Detail |
 |---|---|
 | **Addon ID** | `journalflow@groele.org` |
-| **Version** | `v2.0.8` |
+| **Version** | `v2.0.9` |
 | **Supported Zotero** | Zotero `10.0` – `12.*` (`Gecko 140+ / 153+`) |
 | **Build Stack** | Strict TypeScript (`ES2023`, `noEmit`) + `esbuild` (`firefox140` IIFE bundles) |
 | **Codebase Hygiene** | 100% TypeScript in `src/`, every module `<= 360` lines, Fluent `en-US` / `zh-CN` symmetry |
@@ -35,7 +35,7 @@
 ```bash
 npm install
 npm run test      # typecheck + architecture guard + esbuild bundle + unit tests + XPI self-test
-npm run package   # builds deterministic dist/zotero-journalflow-2.0.8.xpi and syncs update.json SHA-512
+npm run package   # builds deterministic dist/zotero-journalflow-2.0.9.xpi and syncs update.json SHA-512
 ```
 
 ---
