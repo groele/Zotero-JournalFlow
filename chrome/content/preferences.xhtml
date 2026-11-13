@@ -12,7 +12,7 @@
   <html:header class="jf-pref-header">
     <html:div class="jf-pref-title-row">
       <html:h1 data-l10n-id="journalflow-pref-brand-title"></html:h1>
-      <html:span class="jf-pref-version">v5.1.2</html:span>
+      <html:span class="jf-pref-version">v5.1.4</html:span>
     </html:div>
     <html:p class="jf-pref-slogan" data-l10n-id="journalflow-pref-brand-slogan"></html:p>
     <html:p id="jf-pref-status" class="jf-pref-status" role="status" aria-live="polite" data-l10n-id="journalflow-pref-status-loading"></html:p>
@@ -77,50 +77,46 @@
     </html:div>
   </html:details>
 
-  <!-- Card 5: Version & Attribution -->
-  <html:details id="jf-group-about" class="jf-pref-card">
-    <html:summary class="jf-card-header">
-      <html:span class="jf-card-title" data-l10n-id="journalflow-pref-group-about-title"></html:span>
-    </html:summary>
-    <html:div class="jf-card-body">
-      <html:p class="jf-pref-desc" data-l10n-id="journalflow-pref-group-about-desc"></html:p>
-      <html:dl class="jf-release-dl">
-        <html:div class="jf-release-row">
-          <html:dt data-l10n-id="journalflow-pref-version-label"></html:dt>
-          <html:dd>v5.1.2</html:dd>
-        </html:div>
-        <html:div class="jf-release-row">
-          <html:dt data-l10n-id="journalflow-pref-compat-label"></html:dt>
-          <html:dd data-l10n-id="journalflow-pref-compat-value"></html:dd>
-        </html:div>
-        <html:div class="jf-release-row">
-          <html:dt data-l10n-id="journalflow-pref-license-label"></html:dt>
-          <html:dd data-l10n-id="journalflow-pref-license-value"></html:dd>
-        </html:div>
-        <html:div class="jf-release-row">
-          <html:dt data-l10n-id="journalflow-pref-upstream-label"></html:dt>
-          <html:dd data-l10n-id="journalflow-pref-upstream-value"></html:dd>
-        </html:div>
-        <html:div class="jf-release-row">
-          <html:dt data-l10n-id="journalflow-pref-package-label"></html:dt>
-          <html:dd>
-            <html:a href="https://github.com/groele/Zotero-JournalFlow/releases/download/v5.1.2/zotero-journalflow-5.1.2.xpi"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-l10n-id="journalflow-pref-package-download-link"
-                    data-l10n-args='{"version": "5.1.2"}'></html:a>
-          </html:dd>
-        </html:div>
-        <html:div class="jf-release-row">
-          <html:dt data-l10n-id="journalflow-pref-repo-label"></html:dt>
-          <html:dd>
-            <html:a href="https://github.com/groele/Zotero-JournalFlow"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    data-l10n-id="journalflow-pref-repo-link"></html:a>
-          </html:dd>
-        </html:div>
-      </html:dl>
-    </html:div>
-  </html:details>
+  <!-- Bottom Release Info Card: Version & Attribution -->
+  <html:section id="jf-group-about" class="jf-release-info" aria-labelledby="jf-release-heading">
+    <html:div id="jf-release-heading" class="jf-release-title" data-l10n-id="journalflow-pref-group-about-title"></html:div>
+    <html:p class="jf-pref-desc" data-l10n-id="journalflow-pref-group-about-desc"></html:p>
+    <html:dl class="jf-release-dl">
+      <html:div class="jf-release-row">
+        <html:dt data-l10n-id="journalflow-pref-version-label"></html:dt>
+        <html:dd>v5.1.4</html:dd>
+      </html:div>
+      <html:div class="jf-release-row">
+        <html:dt data-l10n-id="journalflow-pref-compat-label"></html:dt>
+        <html:dd data-l10n-id="journalflow-pref-compat-value"></html:dd>
+      </html:div>
+      <html:div class="jf-release-row">
+        <html:dt data-l10n-id="journalflow-pref-license-label"></html:dt>
+        <html:dd data-l10n-id="journalflow-pref-license-value"></html:dd>
+      </html:div>
+      <html:div class="jf-release-row">
+        <html:dt data-l10n-id="journalflow-pref-upstream-label"></html:dt>
+        <html:dd data-l10n-id="journalflow-pref-upstream-value"></html:dd>
+      </html:div>
+      <html:div class="jf-release-row">
+        <html:dt data-l10n-id="journalflow-pref-package-label"></html:dt>
+        <html:dd>
+          <html:a href="https://github.com/groele/Zotero-JournalFlow/releases/download/v5.1.4/zotero-journalflow-5.1.4.xpi"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-l10n-id="journalflow-pref-package-download-link"
+                  data-l10n-args='{"version": "5.1.4"}'></html:a>
+        </html:dd>
+      </html:div>
+      <html:div class="jf-release-row">
+        <html:dt data-l10n-id="journalflow-pref-repo-label"></html:dt>
+        <html:dd>
+          <html:a href="https://github.com/groele/Zotero-JournalFlow"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-l10n-id="journalflow-pref-repo-link"></html:a>
+        </html:dd>
+      </html:div>
+    </html:dl>
+  </html:section>
 </vbox>

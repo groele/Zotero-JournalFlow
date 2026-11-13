@@ -77,7 +77,7 @@
 
 .jf-pref-status {
   margin: 0;
-  color: var(--flow-pref-accent);
+  color: var(--flow-pref-muted);
   font-size: 13px;
   overflow-wrap: anywhere;
 }
@@ -289,9 +289,10 @@ input[type="password"].jf-control {
   cursor: pointer;
 }
 
-.jf-control:disabled {
+.jf-control:disabled,
+.jf-pref-btn:disabled {
   opacity: 0.55;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .jf-prefs-container :focus-visible {
@@ -327,14 +328,15 @@ input[type="password"].jf-control {
 
 .jf-pref-btn {
   min-width: 0;
-  min-height: 32px;
-  padding: 6px 12px;
+  min-height: 30px;
+  padding: 5px 12px;
   border: 1px solid var(--flow-pref-border);
-  border-radius: 4px;
+  border-radius: 5px;
   background: Field;
   color: var(--flow-pref-text);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1.5;
   cursor: pointer;
   user-select: none;
@@ -364,10 +366,28 @@ input[type="password"].jf-control {
   background: color-mix(in srgb, var(--flow-pref-warning) 15%, transparent);
 }
 
+.jf-release-info {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border: 1px solid var(--flow-pref-border);
+  border-radius: 9px;
+  background: var(--flow-pref-surface);
+  color: var(--flow-pref-text);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.jf-release-title {
+  margin-bottom: 4px;
+  color: var(--flow-pref-text);
+  font-size: 14px;
+  font-weight: 600;
+}
+
 .jf-release-dl {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 2px;
   margin: 0;
   padding: 0;
   font-size: 13px;
@@ -375,14 +395,9 @@ input[type="password"].jf-control {
 
 .jf-release-row {
   display: grid;
-  grid-template-columns: minmax(7em, 9em) minmax(0, 1fr);
+  grid-template-columns: minmax(6em, 8em) minmax(0, 1fr);
   gap: 8px;
-  padding: 4px 0;
-  border-bottom: 1px solid var(--flow-pref-divider);
-}
-
-.jf-release-row:last-child {
-  border-bottom: 0;
+  padding: 3px 0;
 }
 
 .jf-release-row dt {
@@ -392,7 +407,7 @@ input[type="password"].jf-control {
 
 .jf-release-row dd {
   margin: 0;
-  color: var(--flow-pref-text);
+  color: var(--flow-pref-muted);
   overflow-wrap: anywhere;
 }
 
@@ -403,4 +418,10 @@ input[type="password"].jf-control {
 
 .jf-release-row a:hover {
   text-decoration: underline;
+}
+
+@media (max-width: 420px) {
+  .jf-control-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
