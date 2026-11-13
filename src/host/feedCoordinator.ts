@@ -1,4 +1,9 @@
-import { DailyFeedCacheStore, DEFAULT_CACHE_TTL_MS, feedCacheKey } from '../services/cache';
+import {
+  DailyFeedCacheStore,
+  DEFAULT_CACHE_TTL_MS,
+  feedCacheKey,
+  mergeIncrementalArticles,
+} from '../services/cache';
 import { fetchJournalFeed } from '../services/crossref';
 import {
   enrichBatchMetadata,
@@ -55,26 +60,42 @@ export class FeedCoordinator {
     const { rows, days, filter, ttlMs } = this.getFeedParams();
     const key = feedCacheKey(issn, rows, days, filter);
 
+    let staleArticles: JournalArticle[] | null = null;
+    let fetchDays = days;
+
     if (force) {
       await this.cache.deleteByISSN(issn);
     } else {
-      const mem = this.cache.getMemory(key, ttlMs);
+      const mem = this.cache.getMemory(key, ttlMs, true);
       if (mem) return this.stampReadingState(mem);
-      const disk = await this.cache.getPersisted(key, { maxAgeMs: ttlMs });
+      const disk = await this.cache.getPersisted(key, { maxAgeMs: ttlMs, requireToday: true });
       if (disk) {
         this.cache.setMemory(key, disk.articles, disk.time);
         return this.stampReadingState(disk.articles);
+      }
+      const stale =
+        (await this.cache.getPersisted(key, { allowStale: true })) ||
+        (await this.cache.getLatestByParams(issn, rows, days, filter));
+      if (stale?.articles?.length) {
+        const daysSince = Math.max(1, Math.ceil((Date.now() - Number(stale.time || 0)) / 86_400_000));
+        if (daysSince < days) {
+          staleArticles = filterRecentDays(stale.articles, days);
+          fetchDays = Math.min(days, daysSince + 1);
+        }
       }
     }
 
     const journalSub = this.getJournals().find((j) => j.issn === issn);
     let articles = dedupeArticles(
-      await fetchJournalFeed(issn, rows, days, journalSub?.altIssns || [])
+      await fetchJournalFeed(issn, rows, fetchDays, journalSub?.altIssns || [])
     );
     if (this.isDisposed()) return [];
 
     if (filter) articles = filterArticleTypes(articles);
     articles = filterRecentDays(articles, days);
+    if (staleArticles?.length) {
+      articles = mergeIncrementalArticles(staleArticles, articles).slice(0, rows);
+    }
     this.stampReadingState(articles);
     this.cache.setMemory(key, articles);
     await this.cache.setPersisted(key, issn, articles);

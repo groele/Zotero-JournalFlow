@@ -10,6 +10,42 @@ declare const IOUtils: any;
 declare const PathUtils: any;
 
 export const DEFAULT_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+export const WEEKLY_CACHE_CLEANUP_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+
+export function mergeIncrementalArticles(
+  existing: JournalArticle[],
+  incoming: JournalArticle[]
+): JournalArticle[] {
+  const keyOf = (a: JournalArticle): string => {
+    const doi = String(a.doi || '').trim().toLowerCase();
+    if (doi) return `doi:${doi}`;
+    return `title:${String(a.title || '').toLowerCase().replace(/[^a-z0-9\u4e00-\u9fa5]/g, '')}`;
+  };
+  const merged = new Map<string, JournalArticle>();
+  for (const prev of existing || []) {
+    const k = keyOf(prev);
+    if (k !== 'title:') merged.set(k, { ...prev });
+  }
+  for (const next of incoming || []) {
+    const k = keyOf(next);
+    if (k === 'title:') continue;
+    const prev = merged.get(k);
+    if (!prev) {
+      merged.set(k, { ...next });
+      continue;
+    }
+    merged.set(k, {
+      ...prev,
+      ...next,
+      abstract: next.abstract || prev.abstract || '',
+      abstractSource: next.abstract ? next.abstractSource : prev.abstractSource || '',
+      pmcid: next.pmcid || prev.pmcid || null,
+      fullTextLinks: next.fullTextLinks?.length ? next.fullTextLinks : prev.fullTextLinks || [],
+      isOpenAccess: Boolean(next.isOpenAccess || prev.isOpenAccess),
+    });
+  }
+  return Array.from(merged.values()).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+}
 
 export interface MemoryCacheValue {
   day: string;
@@ -29,15 +65,26 @@ export function feedCacheKey(
   issn: string,
   rows: number,
   days: number,
-  filterArticleTypes: boolean
+  filterArticleTypes: boolean,
+  day = localDateKey()
 ): string {
   return [
     DAILY_FEED_CACHE_SCHEMA,
+    day,
     issn,
     rows,
     days,
     filterArticleTypes ? 'research' : 'all',
   ].join('|');
+}
+
+export function feedCacheScopePrefix(
+  issn: string,
+  rows: number,
+  days: number,
+  filterArticleTypes: boolean
+): string {
+  return [issn, rows, days, filterArticleTypes ? 'research' : 'all'].join('|');
 }
 
 export function sanitizeFeedArticles(articles: JournalArticle[]): JournalArticle[] {
@@ -87,6 +134,7 @@ export class DailyFeedCacheStore {
     return {
       schema: DAILY_FEED_CACHE_SCHEMA,
       day: localDateKey(),
+      lastWeeklyCleanupTime: Date.now(),
       entries: {},
     };
   }
@@ -112,19 +160,23 @@ export class DailyFeedCacheStore {
     return this.diskCache;
   }
 
-  private pruneExpired(doc: DailyFeedCacheDocument, maxAgeMs: number): void {
-    const now = Date.now();
-    const keepLimit = Math.max(maxAgeMs * 2, 48 * 60 * 60 * 1000);
+  private pruneWeeklyIfNeeded(doc: DailyFeedCacheDocument, now = Date.now()): void {
+    const lastCleanup = Number(doc.lastWeeklyCleanupTime || 0);
+    if (lastCleanup > 0 && now - lastCleanup < WEEKLY_CACHE_CLEANUP_INTERVAL_MS) {
+      return;
+    }
     for (const [key, entry] of Object.entries(doc.entries)) {
-      if (!entry || !Array.isArray(entry.articles) || now - Number(entry.time || 0) > keepLimit) {
+      if (!entry || !Array.isArray(entry.articles) || now - Number(entry.time || 0) > WEEKLY_CACHE_CLEANUP_INTERVAL_MS) {
         delete doc.entries[key];
       }
     }
+    doc.lastWeeklyCleanupTime = now;
   }
 
-  private async writeDiskDoc(doc: DailyFeedCacheDocument, pruneAgeMs = DEFAULT_CACHE_TTL_MS): Promise<void> {
-    doc.day = localDateKey();
-    this.pruneExpired(doc, pruneAgeMs);
+  private async writeDiskDoc(doc: DailyFeedCacheDocument): Promise<void> {
+    const now = Date.now();
+    doc.day = localDateKey(new Date(now));
+    this.pruneWeeklyIfNeeded(doc, now);
     this.diskCache = doc;
     const filePath = this.getCacheFilePath();
     if (typeof IOUtils === 'undefined' || !IOUtils?.writeUTF8 || filePath === `Zotero/${CACHE_FILE_NAME}`) {
@@ -146,9 +198,10 @@ export class DailyFeedCacheStore {
     await this.writeQueue;
   }
 
-  getMemory(cacheKey: string, maxAgeMs = DEFAULT_CACHE_TTL_MS): JournalArticle[] | null {
+  getMemory(cacheKey: string, maxAgeMs = DEFAULT_CACHE_TTL_MS, requireToday = false): JournalArticle[] | null {
     const cached = this.memory.get(cacheKey);
     if (!cached) return null;
+    if (requireToday && cached.day !== localDateKey()) return null;
     if (Date.now() - cached.time <= maxAgeMs) {
       return cached.articles;
     }
@@ -169,22 +222,44 @@ export class DailyFeedCacheStore {
 
   async getPersisted(
     cacheKey: string,
-    { maxAgeMs = DEFAULT_CACHE_TTL_MS, allowStale = false } = {}
+    { maxAgeMs = DEFAULT_CACHE_TTL_MS, allowStale = false, requireToday = false } = {}
   ): Promise<DailyFeedCacheEntry | null> {
     const doc = await this.readDiskDoc();
     const entry = doc.entries[cacheKey];
     if (!entry || !Array.isArray(entry.articles)) return null;
+    if (requireToday && entry.day && entry.day !== localDateKey()) return null;
     if (!allowStale && Date.now() - Number(entry.time || 0) > maxAgeMs) {
       return null;
     }
     return entry;
   }
 
+  async getLatestByParams(
+    issn: string,
+    rows: number,
+    days: number,
+    filterArticleTypes: boolean
+  ): Promise<DailyFeedCacheEntry | null> {
+    const doc = await this.readDiskDoc();
+    const suffix = `|${feedCacheScopePrefix(issn, rows, days, filterArticleTypes)}`;
+    let best: DailyFeedCacheEntry | null = null;
+    for (const [k, entry] of Object.entries(doc.entries)) {
+      if (!entry || !Array.isArray(entry.articles) || !entry.articles.length) continue;
+      if (!k.endsWith(suffix) && entry.issn !== issn) continue;
+      if (k.endsWith(suffix) && (!best || Number(entry.time || 0) > Number(best.time || 0))) {
+        best = entry;
+      }
+    }
+    return best;
+  }
+
   async setPersisted(cacheKey: string, issn: string, articles: JournalArticle[]): Promise<void> {
     const doc = await this.readDiskDoc();
+    const now = Date.now();
     doc.entries[cacheKey] = {
       issn,
-      time: Date.now(),
+      day: localDateKey(new Date(now)),
+      time: now,
       articles: sanitizeFeedArticles(articles),
     };
     await this.writeDiskDoc(doc);
@@ -200,14 +275,16 @@ export class DailyFeedCacheStore {
 
   async deleteByISSN(issn: string): Promise<void> {
     for (const key of Array.from(this.memory.keys())) {
-      if (key.split('|')[1] === issn) {
+      const parts = key.split('|');
+      if (parts[1] === issn || parts[2] === issn) {
         this.memory.delete(key);
       }
     }
     const doc = await this.readDiskDoc();
     let changed = false;
     for (const key of Object.keys(doc.entries)) {
-      if (doc.entries[key]?.issn === issn || key.split('|')[1] === issn) {
+      const parts = key.split('|');
+      if (doc.entries[key]?.issn === issn || parts[1] === issn || parts[2] === issn) {
         delete doc.entries[key];
         changed = true;
       }

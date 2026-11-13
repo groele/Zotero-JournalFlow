@@ -108,6 +108,7 @@ export interface UnpaywallRecord {
 
 export interface DailyFeedCacheEntry {
   issn: string;
+  day?: string;
   time: number;
   articles: JournalArticle[];
 }
@@ -115,6 +116,7 @@ export interface DailyFeedCacheEntry {
 export interface DailyFeedCacheDocument {
   schema: string;
   day: string;
+  lastWeeklyCleanupTime?: number;
   entries: Record<string, DailyFeedCacheEntry>;
 }
 

@@ -44,7 +44,7 @@ journalflow-pref-field-loadFigures = Load body and extended figures
 journalflow-pref-desc-loadFigures = Lazily fetch and validate figures from Europe PMC fullTextXML and open-access publisher landing pages, filtering out blank thumbnails and cover icons.
 
 journalflow-pref-group-maintenance-title = Cache & Data Maintenance
-journalflow-pref-group-maintenance-desc = Manage daily feed cache files stored in your Zotero data directory and restore default preferences.
+journalflow-pref-group-maintenance-desc = Creates daily incremental feed caches (fetching only new articles and preserving enriched abstracts) and automatically cleans expired entries once a week.
 journalflow-pref-subheading-cache = Followed Journals & Cache
 journalflow-pref-followed-summary = Currently following { $count } journal(s). Manage subscriptions inside the JournalFlow workbench sidebar.
 journalflow-pref-cache-path-label = Cache file:

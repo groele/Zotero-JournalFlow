@@ -44,7 +44,7 @@ journalflow-pref-field-loadFigures = 加载正文图与 Extended Figure
 journalflow-pref-desc-loadFigures = 滚动时懒加载并校验 Europe PMC fullTextXML 与开放获取页面中的正文配图，自动过滤空白缩略图与封面图标。
 
 journalflow-pref-group-maintenance-title = 缓存与数据维护
-journalflow-pref-group-maintenance-desc = 管理保存在 Zotero 数据目录中的每日文章缓存，或恢复默认配置。
+journalflow-pref-group-maintenance-desc = 每天自动创建增量文章缓存（仅补拉新增文献并保留已补全摘要），每周自动清理一次过期缓存，或恢复默认配置。
 journalflow-pref-subheading-cache = 订阅状态与缓存维护
 journalflow-pref-followed-summary = 当前已关注 { $count } 本期刊；可在 JournalFlow 工作台左侧栏增删订阅期刊。
 journalflow-pref-cache-path-label = 缓存路径：

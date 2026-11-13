@@ -314,3 +314,54 @@ test('advanceFocusBeforeRemoval moves keyboard focus to next card before filtere
   mod.advanceFocusBeforeRemoval(doc, state, 'doi:10.1000/1');
   assert.equal(state.focusedArticleKey, 'doi:10.1000/2');
 });
+
+test('DailyFeedCacheStore creates daily incremental caches and cleans expired entries weekly', async () => {
+  const mem = createMemoryIOUtils();
+  let now = 1_760_000_000_000;
+  const origDateNow = Date.now;
+  Date.now = () => now;
+  try {
+    const cacheMod = loadTsModule('src/services/cache.ts', {
+      Date,
+      Zotero: { DataDirectory: { dir: 'Z:/mock' }, debug: () => {} },
+      IOUtils: mem.IOUtils,
+      PathUtils: mem.PathUtils,
+    });
+    const store = new cacheMod.DailyFeedCacheStore();
+    const day1Key = cacheMod.feedCacheKey('0028-0836', 200, 14, true, cacheMod.localDateKey(new Date(now)));
+    await store.setPersisted(day1Key, '0028-0836', [
+      { doi: '10.1038/old', title: 'Old Enriched', abstract: 'Recovered abstract', abstractSource: 'epmc', pmcid: 'PMC123', date: '2026-11-10' },
+    ]);
+
+    // Advance 2 days (< 7 days): new day gets a brand-new cache key while Day 1 entry is retained
+    now += 2 * 24 * 60 * 60 * 1000;
+    const day3Key = cacheMod.feedCacheKey('0028-0836', 200, 14, true, cacheMod.localDateKey(new Date(now)));
+    assert.notEqual(day3Key, day1Key);
+    const baseEntry = await store.getLatestByParams('0028-0836', 200, 14, true);
+    assert.ok(baseEntry);
+    assert.equal(baseEntry.articles[0].doi, '10.1038/old');
+
+    // Within the same day: incremental merge updates today's key and preserves enriched fields
+    const merged = cacheMod.mergeIncrementalArticles(
+      baseEntry.articles,
+      [{ doi: '10.1038/old', title: 'Old Enriched', abstract: '', date: '2026-11-10' }, { doi: '10.1038/today', title: 'Today Paper', date: '2026-11-12' }]
+    );
+    await store.setPersisted(day3Key, '0028-0836', merged);
+    assert.equal(merged.length, 2);
+    assert.equal(merged.find((a) => a.doi === '10.1038/old').abstract, 'Recovered abstract');
+    assert.equal(merged.find((a) => a.doi === '10.1038/old').pmcid, 'PMC123');
+    assert.ok(await store.getPersisted(day1Key, { allowStale: true }));
+
+    // Advance past 7 days: weekly cleanup prunes entries older than 7 days
+    now += 6 * 24 * 60 * 60 * 1000;
+    const day9Key = cacheMod.feedCacheKey('0036-8075', 200, 14, true, cacheMod.localDateKey(new Date(now)));
+    await store.setPersisted(day9Key, '0036-8075', [
+      { doi: '10.1126/new2', title: 'Week 2 Science', date: '2026-11-18' },
+    ]);
+    assert.equal(await store.getPersisted(day1Key, { allowStale: true }), null);
+    assert.ok(await store.getPersisted(day3Key, { allowStale: true }));
+    assert.ok(await store.getPersisted(day9Key, { allowStale: true }));
+  } finally {
+    Date.now = origDateNow;
+  }
+});
