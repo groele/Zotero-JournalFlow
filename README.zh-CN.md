@@ -1,8 +1,14 @@
-# Zotero JournalFlow `v4.0.0`
+# Zotero JournalFlow `v5.0.0`
 
 **Zotero JournalFlow** 是一款专为 **Zotero 10–12**（`Gecko 140+ / 153+`）打造的现代化学术期刊订阅与文献发现插件，基于开源项目 [Lyz-623/JournalLens (`v0.3.9`)](https://github.com/Lyz-623/JournalLens) 按照 **Zotero Flow** 套件工程架构、视觉规范与质量标准全面重构。
 
 ---
+
+## `v5.0.0` 全新清新 SVG 图标视觉升级
+
+- **全新清新学术风 SVG 图标体系（`icon.svg` + `toolbar.svg` + 全尺寸 HiDPI PNG）**：
+  - 采用晴空蓝、水漾青与薄荷绿的轻盈渐变配色，融合展开期刊双页、半透明纸面高光、左页流动文献流、右页科研光谱折线图卡片、薄荷绿书签丝带以及右上角珊瑚金新知星芒与实时订阅涟漪（`chrome/content/icons/icon.svg`）。
+  - 同步定制 `24×24` 极简高对比 `toolbar.svg`（专用于 Zotero 工具栏、菜单项及 `16×16`/`32×32` 小尺寸图标），并重绘全套 `16/32/48/64/96/128px` 高清 PNG 图标。
 
 ## `v4.0.0` 大版本工程强化与性能升级
 
@@ -38,7 +44,7 @@
 | 项目 | 规范说明 |
 |---|---|
 | **插件 ID** | `journalflow@groele.org` |
-| **当前版本** | `v4.0.0` |
+| **当前版本** | `v5.0.0` |
 | **宿主兼容** | Zotero `10.0` – `12.*`（`Gecko 140+ / 153+`） |
 | **构建体系** | TypeScript (`ES2023`, `strict`) + `esbuild` (`firefox140` IIFE，禁混淆保留可读堆栈) |
 | **代码规范** | `src/` 全量 TypeScript、单文件严格 `<= 360` 行、Fluent `en-US` / `zh-CN` 键值严格对称 |
@@ -51,7 +57,7 @@
 ```bash
 npm install
 npm run test      # 静态类型检查 + 架构守卫 + esbuild 打包 + 单元测试 + XPI 确定性自检
-npm run package   # 输出 dist/zotero-journalflow-4.0.0.xpi 并自动回写 update.json SHA-512 校验
+npm run package   # 输出 dist/zotero-journalflow-5.0.0.xpi 并自动回写 update.json SHA-512 校验
 ```
 
 ---

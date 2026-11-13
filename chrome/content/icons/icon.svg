@@ -1,78 +1,109 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none" role="img" aria-labelledby="jf-title jf-desc">
   <title id="jf-title">Zotero JournalFlow</title>
-  <desc id="jf-desc">Open academic journal spread with live stream lines, figure card, emerald bookmark ribbon, and Zotero Flow spark.</desc>
+  <desc id="jf-desc">Fresh open academic journal spread with flowing paper stream lines, embedded figure preview card, mint bookmark ribbon, and live discovery spark.</desc>
   <defs>
-    <linearGradient id="jf-left-wing" x1="14" y1="22" x2="62" y2="106" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#6366F1" />
-      <stop offset="52%" stop-color="#3B82F6" />
-      <stop offset="100%" stop-color="#1D4ED8" />
-    </linearGradient>
-    <linearGradient id="jf-right-wing" x1="66" y1="104" x2="112" y2="24" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#0284C7" />
-      <stop offset="55%" stop-color="#0EA5E9" />
-      <stop offset="100%" stop-color="#22D3EE" />
-    </linearGradient>
-    <linearGradient id="jf-ribbon" x1="57" y1="84" x2="71" y2="118" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#34D399" />
-      <stop offset="100%" stop-color="#059669" />
-    </linearGradient>
-    <linearGradient id="jf-line-1" x1="24" y1="44" x2="52" y2="54" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#E0F2FE" />
-      <stop offset="100%" stop-color="#67E8F9" />
-    </linearGradient>
-    <linearGradient id="jf-line-2" x1="24" y1="60" x2="52" y2="70" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#BAE6FD" />
-      <stop offset="100%" stop-color="#7DD3FC" />
-    </linearGradient>
-    <linearGradient id="jf-chart" x1="3" y1="16" x2="25" y2="4" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#2563EB" />
-      <stop offset="100%" stop-color="#06B6D4" />
-    </linearGradient>
-    <linearGradient id="jf-spark" x1="97" y1="3" x2="121" y2="27" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#F43F5E" />
-      <stop offset="100%" stop-color="#FB923C" />
-    </linearGradient>
-    <filter id="jf-shadow" x="-16%" y="-16%" width="132%" height="136%">
-      <feDropShadow dx="0" dy="5" stdDeviation="4" flood-color="#0F172A" flood-opacity="0.16" />
+    <!-- Soft ambient drop shadow -->
+    <filter id="jf-shadow" x="-14%" y="-14%" width="128%" height="132%">
+      <feDropShadow dx="0" dy="5" stdDeviation="4.5" flood-color="#0EA5E9" flood-opacity="0.16" />
     </filter>
+
+    <!-- Fresh Mint Bookmark Ribbon -->
+    <linearGradient id="jf-ribbon" x1="58" y1="88" x2="70" y2="118" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5EEAD4" />
+      <stop offset="55%" stop-color="#2DD4BF" />
+      <stop offset="100%" stop-color="#0D9488" />
+    </linearGradient>
+
+    <!-- Left Page: Fresh Indigo-Sky (matches Flow family palette) -->
+    <linearGradient id="jf-left-page" x1="16" y1="26" x2="62" y2="104" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8" />
+      <stop offset="50%" stop-color="#3B82F6" />
+      <stop offset="100%" stop-color="#0EA5E9" />
+    </linearGradient>
+
+    <!-- Right Page: Fresh Aqua-to-Mint -->
+    <linearGradient id="jf-right-page" x1="66" y1="104" x2="112" y2="26" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0284C7" />
+      <stop offset="52%" stop-color="#06B6D4" />
+      <stop offset="100%" stop-color="#2DD4BF" />
+    </linearGradient>
+
+    <!-- Inner Paper Translucent Sheen -->
+    <linearGradient id="jf-sheen" x1="18" y1="28" x2="110" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.45" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.06" />
+    </linearGradient>
+
+    <!-- Flowing Stream Bars -->
+    <linearGradient id="jf-stream-1" x1="25" y1="45" x2="52" y2="55" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.96" />
+      <stop offset="100%" stop-color="#E0F2FE" stop-opacity="0.92" />
+    </linearGradient>
+    <linearGradient id="jf-stream-2" x1="25" y1="61" x2="50" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#E0F2FE" stop-opacity="0.92" />
+      <stop offset="100%" stop-color="#A5F3FC" stop-opacity="0.88" />
+    </linearGradient>
+
+    <!-- Figure Card Chart Line -->
+    <linearGradient id="jf-chart" x1="4" y1="16" x2="25" y2="4" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0EA5E9" />
+      <stop offset="100%" stop-color="#14B8A6" />
+    </linearGradient>
+    <linearGradient id="jf-chart-fill" x1="14" y1="5" x2="14" y2="19" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.32" />
+      <stop offset="100%" stop-color="#38BDF8" stop-opacity="0.02" />
+    </linearGradient>
+
+    <!-- Warm Coral-Amber Discovery Spark -->
+    <linearGradient id="jf-spark" x1="98" y1="5" x2="120" y2="27" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FB7185" />
+      <stop offset="55%" stop-color="#F97316" />
+      <stop offset="100%" stop-color="#FBBF24" />
+    </linearGradient>
   </defs>
 
   <g filter="url(#jf-shadow)">
-    <!-- Center Bookmark Ribbon (Peeking cleanly beneath the journal spine) -->
-    <path d="M 57 88 L 71 88 L 71 115.5 C 71 117.5 68.7 118.6 67.2 117.2 L 64 114.1 L 60.8 117.2 C 59.3 118.6 57 117.5 57 115.5 Z"
+    <!-- Mint Bookmark Ribbon beneath Spine -->
+    <path d="M 57.5 89 L 70.5 89 L 70.5 115.5 C 70.5 117.4 68.3 118.4 66.9 117.1 L 64 114.2 L 61.1 117.1 C 59.7 118.4 57.5 117.4 57.5 115.5 Z"
           fill="url(#jf-ribbon)" />
 
-    <!-- Left Open Journal Wing -->
-    <path d="M 14 35.5 C 14 27.8 21.8 23.2 28.9 26.1 L 52.8 36 C 58.1 38.2 61.5 43.3 61.5 49 L 61.5 101.5 C 61.5 105.8 57.1 108.5 53.2 106.7 L 23.1 92.8 C 17.6 90.2 14 84.7 14 78.6 Z"
-          fill="url(#jf-left-wing)" />
-    <path d="M 20.5 32.2 C 23.5 30 27.2 30.2 31.5 32 L 52.5 40.8"
-          stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.38" />
+    <!-- Left Open Journal Page -->
+    <path d="M 15 36.5 C 15 28.4 23.2 23.5 30.6 26.8 L 53.6 37 C 58.6 39.2 61.8 44.1 61.8 49.6 L 61.8 100.8 C 61.8 105.1 57.3 107.8 53.4 106 L 23.8 92.2 C 18.4 89.7 15 84.3 15 78.3 Z"
+          fill="url(#jf-left-page)" />
+    <!-- Left Page Soft Inner Highlight -->
+    <path d="M 21 33.4 C 24.4 31.2 28.2 31.4 32.5 33.3 L 52.8 42.3"
+          stroke="url(#jf-sheen)" stroke-width="2.2" stroke-linecap="round" />
 
-    <!-- Left Page Live Paper Stream Lines -->
-    <path d="M 24.5 48.5 L 50.5 58" stroke="url(#jf-line-1)" stroke-width="6.5" stroke-linecap="round" />
-    <path d="M 24.5 64.5 L 49.5 73.6" stroke="url(#jf-line-2)" stroke-width="6.5" stroke-linecap="round" opacity="0.92" />
-    <path d="M 24.5 80.5 L 39.5 86" stroke="#A5F3FC" stroke-width="6.5" stroke-linecap="round" opacity="0.82" />
+    <!-- Left Page Journal Masthead Dot + Flowing Paper Stream Lines -->
+    <circle cx="28" cy="40.5" r="3" fill="#A5F3FC" opacity="0.92" />
+    <path d="M 35 42.8 L 50.5 49.4" stroke="#FFFFFF" stroke-width="4.2" stroke-linecap="round" opacity="0.72" />
+    <path d="M 25.5 54.5 L 51 64.5" stroke="url(#jf-stream-1)" stroke-width="6.2" stroke-linecap="round" />
+    <path d="M 25.5 69.5 L 48.5 78.5" stroke="url(#jf-stream-2)" stroke-width="6.2" stroke-linecap="round" />
+    <path d="M 25.5 84.2 L 40 89.8" stroke="#CCFBF1" stroke-width="5.6" stroke-linecap="round" opacity="0.88" />
 
-    <!-- Right Open Journal Wing (Soaring azure flow wing) -->
-    <path d="M 66.5 49 C 66.5 43.3 69.9 38.2 75.2 36 L 99.1 26.1 C 106.2 23.2 114 27.8 114 35.5 L 114 78.6 C 114 84.7 110.4 90.2 104.9 92.8 L 74.8 106.7 C 70.9 108.5 66.5 105.8 66.5 101.5 Z"
-          fill="url(#jf-right-wing)" />
-    <path d="M 75.5 40.8 L 96.5 32 C 100.8 30.2 104.5 30 107.5 32.2"
-          stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" opacity="0.45" />
+    <!-- Right Open Journal Page -->
+    <path d="M 66.2 49.6 C 66.2 44.1 69.4 39.2 74.4 37 L 97.4 26.8 C 104.8 23.5 113 28.4 113 36.5 L 113 78.3 C 113 84.3 109.6 89.7 104.2 92.2 L 74.6 106 C 70.7 107.8 66.2 105.1 66.2 100.8 Z"
+          fill="url(#jf-right-page)" />
+    <!-- Right Page Soft Inner Highlight -->
+    <path d="M 75.2 42.3 L 95.5 33.3 C 99.8 31.4 103.6 31.2 107 33.4"
+          stroke="url(#jf-sheen)" stroke-width="2.2" stroke-linecap="round" />
 
-    <!-- Right Page Embedded Figure Card (skewed accurately around card top-left origin) -->
-    <g transform="translate(75.5 52.5) skewY(-20)">
-      <rect x="0" y="0" width="29" height="21" rx="5.5" fill="#FFFFFF" fill-opacity="0.94" />
-      <path d="M 5 14.5 L 11 8 L 16.5 12 L 23.5 5.5"
-            stroke="url(#jf-chart)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
-      <circle cx="23.5" cy="5.5" r="2.2" fill="#0EA5E9" />
+    <!-- Right Page Embedded Scientific Figure Card -->
+    <g transform="translate(75 51.5) skewY(-19.5)">
+      <rect x="0" y="0" width="29.5" height="22" rx="6" fill="#FFFFFF" fill-opacity="0.96" />
+      <path d="M 4.5 16.5 L 10.5 9.5 L 16.2 13.5 L 23.8 6 L 23.8 18 L 4.5 18 Z"
+            fill="url(#jf-chart-fill)" />
+      <path d="M 4.5 16.5 L 10.5 9.5 L 16.2 13.5 L 23.8 6"
+            stroke="url(#jf-chart)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="23.8" cy="6" r="2.3" fill="#14B8A6" />
     </g>
 
-    <!-- Right Page Caption Flow Bars -->
-    <path d="M 76.5 83.5 L 102.5 74" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round" opacity="0.9" />
-    <path d="M 76.5 95 L 91.5 89.5" stroke="#BAE6FD" stroke-width="5.5" stroke-linecap="round" opacity="0.85" />
+    <!-- Right Page Figure Caption Bars -->
+    <path d="M 76 83.5 L 102.5 73.8" stroke="#FFFFFF" stroke-width="5.8" stroke-linecap="round" opacity="0.94" />
+    <path d="M 76 94.5 L 92 88.6" stroke="#CCFBF1" stroke-width="5.2" stroke-linecap="round" opacity="0.88" />
 
-    <!-- Signature Zotero Flow Discovery Spark (Clear breathing space above wing) -->
-    <path d="M 109 3 C 109 10.5 112.5 14 120 14 C 112.5 14 109 17.5 109 25 C 109 17.5 105.5 14 98 14 C 105.5 14 109 10.5 109 3 Z"
+    <!-- Signature Zotero Flow Coral-Amber Spark (clean, matching TaskFlow) -->
+    <path d="M 109 4.5 C 109 11.4 112.3 14.7 119.2 14.7 C 112.3 14.7 109 18 109 24.9 C 109 18 105.7 14.7 98.8 14.7 C 105.7 14.7 109 11.4 109 4.5 Z"
           fill="url(#jf-spark)" />
   </g>
 </svg>

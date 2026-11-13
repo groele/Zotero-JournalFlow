@@ -1,8 +1,14 @@
-# Zotero JournalFlow `v4.0.0`
+# Zotero JournalFlow `v5.0.0`
 
 **Zotero JournalFlow** is a modern Zotero 10–12 (`Gecko 140+ / 153+`) extension for tracking academic journals directly inside Zotero, refactored in strict TypeScript from [Lyz-623/JournalLens (`v0.3.9`)](https://github.com/Lyz-623/JournalLens) to follow the [Zotero Flow](https://github.com/groele) architecture, UI design language, and engineering quality standards.
 
 ---
+
+## What's New in `v5.0.0`
+
+- **Fresh Redesigned SVG Icon System (`icon.svg` + `toolbar.svg` + HiDPI PNGs)**:
+  - Crafted a bright, airy sky-blue / aqua / mint-teal open-journal silhouette with a translucent paper sheen, flowing literature stream bars, an embedded scientific figure spectrum card, a mint bookmark ribbon, and a coral-amber live discovery spark (`chrome/content/icons/icon.svg`).
+  - Paired with a dedicated `24×24` pixel-crisp `toolbar.svg` (used for Zotero's toolbar, menu items, and small `16×16`/`32×32` rasterized PNGs) and full `48/64/96/128px` HiDPI PNG set.
 
 ## What's New in `v4.0.0`
 
@@ -38,7 +44,7 @@
 | Specification | Detail |
 |---|---|
 | **Addon ID** | `journalflow@groele.org` |
-| **Version** | `v4.0.0` |
+| **Version** | `v5.0.0` |
 | **Supported Zotero** | Zotero `10.0` – `12.*` (`Gecko 140+ / 153+`) |
 | **Build Stack** | Strict TypeScript (`ES2023`, `noEmit`) + `esbuild` (`firefox140` IIFE bundles) |
 | **Codebase Hygiene** | 100% TypeScript in `src/`, every module `<= 360` lines, Fluent `en-US` / `zh-CN` symmetry |
@@ -51,7 +57,7 @@
 ```bash
 npm install
 npm run test      # typecheck + architecture guard + esbuild bundle + unit tests + XPI self-test
-npm run package   # builds deterministic dist/zotero-journalflow-4.0.0.xpi and syncs update.json SHA-512
+npm run package   # builds deterministic dist/zotero-journalflow-5.0.0.xpi and syncs update.json SHA-512
 ```
 
 ---

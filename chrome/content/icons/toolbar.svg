@@ -1,34 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="none" role="img" aria-label="Zotero JournalFlow">
   <defs>
-    <linearGradient id="jft-left" x1="2" y1="4" x2="11" y2="20" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#6366F1" />
-      <stop offset="100%" stop-color="#1D4ED8" />
+    <linearGradient id="jft-left" x1="2.5" y1="4.5" x2="11.2" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#818CF8" />
+      <stop offset="100%" stop-color="#2563EB" />
     </linearGradient>
-    <linearGradient id="jft-right" x1="13" y1="20" x2="22" y2="4" gradientUnits="userSpaceOnUse">
+    <linearGradient id="jft-right" x1="12.8" y1="20" x2="21.5" y2="4.5" gradientUnits="userSpaceOnUse">
       <stop offset="0%" stop-color="#0284C7" />
-      <stop offset="100%" stop-color="#22D3EE" />
+      <stop offset="100%" stop-color="#2DD4BF" />
+    </linearGradient>
+    <linearGradient id="jft-ribbon" x1="12" y1="16" x2="12" y2="22.5" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#5EEAD4" />
+      <stop offset="100%" stop-color="#0D9488" />
     </linearGradient>
     <linearGradient id="jft-spark" x1="18" y1="1" x2="23" y2="6" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#F43F5E" />
-      <stop offset="100%" stop-color="#FB923C" />
+      <stop offset="0%" stop-color="#FB7185" />
+      <stop offset="100%" stop-color="#FBBF24" />
     </linearGradient>
   </defs>
-  <!-- Emerald Bookmark Tip -->
-  <path d="M 10.2 16.5 L 13.8 16.5 L 13.8 21.6 C 13.8 22.1 13.2 22.4 12.8 22 L 12 21.2 L 11.2 22 C 10.8 22.4 10.2 22.1 10.2 21.6 Z"
-        fill="#10B981" />
-  <!-- Left Wing -->
-  <path d="M 2.5 6.8 C 2.5 5.3 4 4.4 5.4 5 L 9.8 6.8 C 10.6 7.2 11.1 8 11.1 8.9 L 11.1 19.2 C 11.1 20 10.2 20.5 9.5 20.1 L 4.1 17.6 C 3.1 17.2 2.5 16.2 2.5 15.1 Z"
+  <!-- Mint Bookmark Ribbon -->
+  <path d="M 10.3 16.5 L 13.7 16.5 L 13.7 21.6 C 13.7 22.1 13.1 22.4 12.7 22 L 12 21.3 L 11.3 22 C 10.9 22.4 10.3 22.1 10.3 21.6 Z"
+        fill="url(#jft-ribbon)" />
+  <!-- Left Page -->
+  <path d="M 2.5 6.8 C 2.5 5.2 4.1 4.3 5.6 5 L 9.9 6.9 C 10.7 7.3 11.2 8.1 11.2 9 L 11.2 19.2 C 11.2 20 10.3 20.5 9.6 20.1 L 4.1 17.6 C 3.1 17.1 2.5 16.1 2.5 15 Z"
         fill="url(#jft-left)" />
-  <path d="M 4.6 9.5 L 8.9 11.1" stroke="#E0F2FE" stroke-width="1.7" stroke-linecap="round" />
-  <path d="M 4.6 13.1 L 8.9 14.7" stroke="#7DD3FC" stroke-width="1.7" stroke-linecap="round" />
-  <!-- Right Wing -->
-  <path d="M 12.9 8.9 C 12.9 8 13.4 7.2 14.2 6.8 L 18.6 5 C 20 4.4 21.5 5.3 21.5 6.8 L 21.5 15.1 C 21.5 16.2 20.9 17.2 19.9 17.6 L 14.5 20.1 C 13.8 20.5 12.9 20 12.9 19.2 Z"
+  <path d="M 4.7 9.6 L 9 11.3" stroke="#FFFFFF" stroke-width="1.7" stroke-linecap="round" opacity="0.95" />
+  <path d="M 4.7 13.1 L 8.6 14.6" stroke="#CCFBF1" stroke-width="1.7" stroke-linecap="round" opacity="0.9" />
+  <!-- Right Page -->
+  <path d="M 12.8 9 C 12.8 8.1 13.3 7.3 14.1 6.9 L 18.4 5 C 19.9 4.3 21.5 5.2 21.5 6.8 L 21.5 15 C 21.5 16.1 20.9 17.1 19.9 17.6 L 14.4 20.1 C 13.7 20.5 12.8 20 12.8 19.2 Z"
         fill="url(#jft-right)" />
-  <g transform="translate(14.6 10.1) skewY(-20)">
-    <rect x="0" y="0" width="5" height="3.8" rx="1" fill="#FFFFFF" fill-opacity="0.93" />
+  <g transform="translate(14.5 9.9) skewY(-19.5)">
+    <rect x="0" y="0" width="5.2" height="4" rx="1.1" fill="#FFFFFF" fill-opacity="0.95" />
   </g>
-  <path d="M 14.9 16 L 19.3 14.3" stroke="#E0F2FE" stroke-width="1.6" stroke-linecap="round" />
-  <!-- Zotero Flow Spark -->
-  <path d="M 20.5 0.6 C 20.5 2.1 21.2 2.8 22.7 2.8 C 21.2 2.8 20.5 3.5 20.5 5 C 20.5 3.5 19.8 2.8 18.3 2.8 C 19.8 2.8 20.5 2.1 20.5 0.6 Z"
+  <path d="M 14.8 16 L 19.2 14.3" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" opacity="0.92" />
+  <!-- Coral-Amber Discovery Spark -->
+  <path d="M 20.5 0.8 C 20.5 2.2 21.2 2.9 22.6 2.9 C 21.2 2.9 20.5 3.6 20.5 5 C 20.5 3.6 19.8 2.9 18.4 2.9 C 19.8 2.9 20.5 2.2 20.5 0.8 Z"
         fill="url(#jft-spark)" />
 </svg>
