@@ -143,19 +143,25 @@ export function renderSidebarPresetsAndIO(
       const btn = doc.createElement('button');
       btn.type = 'button';
       btn.className = 'preset-btn';
+      btn.dataset.presetId = preset.id;
       btn.textContent = S(preset.labelKey);
       btn.title = btn.textContent;
-      btn.addEventListener(
+      presetList.appendChild(btn);
+    }
+    if (!presetList.dataset.jfBound) {
+      presetList.dataset.jfBound = '1';
+      presetList.addEventListener(
         'click',
-        () => {
-          if (typeof ctx.JournalFlow.applyJournalPreset !== 'function') return;
-          state.journals = ctx.JournalFlow.applyJournalPreset(preset.id);
+        (event: Event) => {
+          const target = (event.target as Element | null)?.closest?.('button.preset-btn') as HTMLButtonElement | null;
+          const presetId = target?.dataset.presetId as PresetPackId | undefined;
+          if (!presetId || typeof ctx.JournalFlow.applyJournalPreset !== 'function') return;
+          state.journals = ctx.JournalFlow.applyJournalPreset(presetId);
           renderSidebar(doc, ctx, state, onChanged, onRetryJournal);
           onChanged();
         },
         { signal }
       );
-      presetList.appendChild(btn);
     }
   }
 
@@ -165,37 +171,40 @@ export function renderSidebarPresetsAndIO(
 
   if (exportBtn) {
     exportBtn.textContent = S('export-subs');
-    exportBtn.addEventListener('click', async () => {
-      if (exportBtn.disabled) return;
-      exportBtn.disabled = true;
-      try {
-        if (typeof ctx.JournalFlow.exportSubscriptionsToFile === 'function') {
-          const res = await ctx.JournalFlow.exportSubscriptionsToFile();
-          if (res?.saved) {
-            showNotice(doc, state, S('export-subs-ok').replace('{path}', res.path || 'journalflow-subscriptions.json'), 'warn');
-            return;
+    if (!exportBtn.dataset.jfBound) {
+      exportBtn.dataset.jfBound = '1';
+      exportBtn.addEventListener('click', async () => {
+        if (exportBtn.disabled) return;
+        exportBtn.disabled = true;
+        try {
+          if (typeof ctx.JournalFlow.exportSubscriptionsToFile === 'function') {
+            const res = await ctx.JournalFlow.exportSubscriptionsToFile();
+            if (res?.saved) {
+              showNotice(doc, state, S('export-subs-ok').replace('{path}', res.path || 'journalflow-subscriptions.json'), 'warn');
+              return;
+            }
+            if (res && (res.canceled || !res.unavailable)) return;
           }
-          if (res && (res.canceled || !res.unavailable)) return;
+          const json = ctx.JournalFlow.exportSubscriptionsJSON?.() || JSON.stringify(state.journals, null, 2);
+          const BlobCtor = (doc.defaultView as any)?.Blob || globalThis.Blob;
+          const URLApi = (doc.defaultView as any)?.URL || globalThis.URL;
+          if (!BlobCtor || !URLApi?.createObjectURL) throw new Error('Export API unavailable');
+          const url = URLApi.createObjectURL(new BlobCtor([json], { type: 'application/json' }));
+          const a = doc.createElement('a');
+          a.href = url;
+          a.download = 'journalflow-subscriptions.json';
+          doc.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URLApi.revokeObjectURL?.(url), 1000);
+          showNotice(doc, state, S('export-subs-ok').replace('{path}', 'journalflow-subscriptions.json'), 'warn');
+        } catch {
+          showNotice(doc, state, S('export-subs-err'), 'error');
+        } finally {
+          exportBtn.disabled = false;
         }
-        const json = ctx.JournalFlow.exportSubscriptionsJSON?.() || JSON.stringify(state.journals, null, 2);
-        const BlobCtor = (doc.defaultView as any)?.Blob || globalThis.Blob;
-        const URLApi = (doc.defaultView as any)?.URL || globalThis.URL;
-        if (!BlobCtor || !URLApi?.createObjectURL) throw new Error('Export API unavailable');
-        const url = URLApi.createObjectURL(new BlobCtor([json], { type: 'application/json' }));
-        const a = doc.createElement('a');
-        a.href = url;
-        a.download = 'journalflow-subscriptions.json';
-        doc.body.appendChild(a);
-        a.click();
-        a.remove();
-        setTimeout(() => URLApi.revokeObjectURL?.(url), 1000);
-        showNotice(doc, state, S('export-subs-ok').replace('{path}', 'journalflow-subscriptions.json'), 'warn');
-      } catch {
-        showNotice(doc, state, S('export-subs-err'), 'error');
-      } finally {
-        exportBtn.disabled = false;
-      }
-    }, { signal });
+      }, { signal });
+    }
   }
 
   const applyImported = (nextJournals: FeedUIState['journals']) => {
@@ -207,40 +216,46 @@ export function renderSidebarPresetsAndIO(
 
   if (importBtn && fileInput) {
     importBtn.textContent = S('import-subs');
-    importBtn.addEventListener('click', async () => {
-      if (importBtn.disabled) return;
-      if (typeof ctx.JournalFlow.importSubscriptionsFromFile === 'function') {
-        importBtn.disabled = true;
-        try {
-          const res = await ctx.JournalFlow.importSubscriptionsFromFile();
-          if (res?.imported && res.journals) {
-            applyImported(res.journals);
+    if (!importBtn.dataset.jfBound) {
+      importBtn.dataset.jfBound = '1';
+      importBtn.addEventListener('click', async () => {
+        if (importBtn.disabled) return;
+        if (typeof ctx.JournalFlow.importSubscriptionsFromFile === 'function') {
+          importBtn.disabled = true;
+          try {
+            const res = await ctx.JournalFlow.importSubscriptionsFromFile();
+            if (res?.imported && res.journals) {
+              applyImported(res.journals);
+              return;
+            }
+            if (res && (res.canceled || !res.unavailable)) return;
+          } catch {
+            showNotice(doc, state, S('import-subs-err'), 'error');
             return;
+          } finally {
+            importBtn.disabled = false;
           }
-          if (res && (res.canceled || !res.unavailable)) return;
-        } catch {
-          showNotice(doc, state, S('import-subs-err'), 'error');
-          return;
-        } finally {
-          importBtn.disabled = false;
         }
-      }
-      fileInput.click();
-    }, { signal });
+        fileInput.click();
+      }, { signal });
+    }
 
-    fileInput.addEventListener(
-      'change',
-      async () => {
-        const file = fileInput.files?.[0];
-        fileInput.value = '';
-        if (!file || typeof ctx.JournalFlow.importSubscriptionsJSON !== 'function') return;
-        try {
-          applyImported(ctx.JournalFlow.importSubscriptionsJSON(await file.text()));
-        } catch {
-          showNotice(doc, state, S('import-subs-err'), 'error');
-        }
-      },
-      { signal }
-    );
+    if (!fileInput.dataset.jfBound) {
+      fileInput.dataset.jfBound = '1';
+      fileInput.addEventListener(
+        'change',
+        async () => {
+          const file = fileInput.files?.[0];
+          fileInput.value = '';
+          if (!file || typeof ctx.JournalFlow.importSubscriptionsJSON !== 'function') return;
+          try {
+            applyImported(ctx.JournalFlow.importSubscriptionsJSON(await file.text()));
+          } catch {
+            showNotice(doc, state, S('import-subs-err'), 'error');
+          }
+        },
+        { signal }
+      );
+    }
   }
 }
