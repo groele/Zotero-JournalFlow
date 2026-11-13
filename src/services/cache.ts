@@ -173,6 +173,24 @@ export class DailyFeedCacheStore {
     doc.lastWeeklyCleanupTime = now;
   }
 
+  private evictOldestToFit(doc: DailyFeedCacheDocument, maxBytes: number): string {
+    let raw = JSON.stringify(doc);
+    if (raw.length <= maxBytes) return raw;
+    const today = doc.day;
+    const candidates = Object.entries(doc.entries).sort((a, b) => {
+      const aToday = a[1]?.day === today ? 1 : 0;
+      const bToday = b[1]?.day === today ? 1 : 0;
+      if (aToday !== bToday) return aToday - bToday;
+      return Number(a[1]?.time || 0) - Number(b[1]?.time || 0);
+    });
+    for (const [key] of candidates) {
+      if (raw.length <= maxBytes) break;
+      delete doc.entries[key];
+      raw = JSON.stringify(doc);
+    }
+    return raw;
+  }
+
   private async writeDiskDoc(doc: DailyFeedCacheDocument): Promise<void> {
     const now = Date.now();
     doc.day = localDateKey(new Date(now));
@@ -184,7 +202,7 @@ export class DailyFeedCacheStore {
     }
     const run = async () => {
       try {
-        const raw = JSON.stringify(doc);
+        const raw = this.evictOldestToFit(doc, DAILY_FEED_CACHE_MAX_BYTES);
         if (raw.length > DAILY_FEED_CACHE_MAX_BYTES) {
           Zotero?.debug?.('JournalFlow: feed cache exceeds max bytes; skipping persistence');
           return;

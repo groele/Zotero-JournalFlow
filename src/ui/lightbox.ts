@@ -109,13 +109,24 @@ function renderLightboxFigure(doc: Document, state: LightboxState): void {
   if (!stage || !img || !caption || !figure) return;
 
   let index = 0;
+  img.classList.remove('is-error');
+  img.alt = figure.label || '';
+  img.removeAttribute('src');
   img.onerror = () => {
     index++;
     if (index < figure.urls.length) {
       img.src = figure.urls[index];
+    } else {
+      img.classList.add('is-error');
+      const base = figureCaptionText(figure);
+      const errText = 'Image failed to load — use Open Original Image below.';
+      caption.textContent = base ? `${base}\n(${errText})` : errText;
     }
   };
-  img.onload = () => updateLightboxGeometry(doc);
+  img.onload = () => {
+    img.classList.remove('is-error');
+    updateLightboxGeometry(doc);
+  };
   img.src = figure.urls[0];
   caption.textContent = figureCaptionText(figure);
   if (counter) {

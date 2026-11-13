@@ -306,12 +306,26 @@ function initWorkbench(): void {
   );
 
   const articleSearch = doc.getElementById('article-search-input') as HTMLInputElement | null;
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
+  signal.addEventListener('abort', () => {
+    if (searchTimer) clearTimeout(searchTimer);
+  });
   articleSearch?.addEventListener(
     'input',
     () => {
-      state.articleQuery = articleSearch.value.trim();
-      state.visibleLimit = 40;
-      renderArticles(doc, ctx, state);
+      if (searchTimer) clearTimeout(searchTimer);
+      const applySearch = () => {
+        state.articleQuery = articleSearch.value.trim();
+        state.visibleLimit = 40;
+        renderArticles(doc, ctx, state);
+      };
+      const clearBtn = doc.getElementById('article-search-clear') as HTMLButtonElement | null;
+      if (clearBtn) clearBtn.hidden = !articleSearch.value;
+      if (state.articles.length > 200) {
+        searchTimer = setTimeout(applySearch, 120);
+      } else {
+        applySearch();
+      }
     },
     { signal }
   );

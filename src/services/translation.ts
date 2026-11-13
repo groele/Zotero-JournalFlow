@@ -137,16 +137,28 @@ async function translateViaPDFTranslate(
     return typeof out === 'string' ? out.trim() : '';
   };
 
-  let translated = '';
-  try {
-    translated = extract(await api.translate(text, { langFrom, langTo }));
-  } catch (err) {
-    translated = extract(await api.translate(text));
-    if (!translated) throw err;
+  const translateChunk = async (chunk: string): Promise<string> => {
+    let out = '';
+    try {
+      out = extract(await api.translate(chunk, { langFrom, langTo }));
+    } catch (err) {
+      out = extract(await api.translate(chunk));
+      if (!out) throw err;
+    }
+    if (!out) {
+      out = extract(await api.translate(chunk));
+    }
+    return out;
+  };
+
+  const parts = text.length > 1800 ? chunkText(text, 1600) : [text];
+  const translatedParts: string[] = [];
+  for (const part of parts) {
+    const out = await translateChunk(part);
+    if (!out) throw new Error('Empty response from Zotero PDF Translate');
+    translatedParts.push(out);
   }
-  if (!translated) {
-    translated = extract(await api.translate(text));
-  }
+  const translated = translatedParts.join(' ').trim();
   if (!translated || translated === text.trim()) {
     throw new Error('Empty or unchanged response from Zotero PDF Translate');
   }

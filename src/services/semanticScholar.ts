@@ -1,5 +1,5 @@
 import type { JournalArticle } from '../types';
-import { httpPostJSON, uniqueURLs } from './http';
+import { httpPostJSON, isHostBlocked, uniqueURLs } from './http';
 import { normalizeDOI } from './openalex';
 
 declare const Zotero: any;
@@ -25,6 +25,10 @@ export async function enrichWithSemanticScholar(
   if (!targets.length) return articles;
 
   for (let i = 0; i < targets.length; i += 40) {
+    if (isHostBlocked(S2_BATCH_URL)) break;
+    if (i > 0) {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
     const batch = targets.slice(i, i + 40);
     const ids = batch.map((a) => `DOI:${normalizeDOI(a.doi)}`);
     try {
@@ -62,6 +66,9 @@ export async function enrichWithSemanticScholar(
     } catch (error) {
       if (typeof Zotero !== 'undefined') {
         Zotero.debug?.(`JournalFlow: Semantic Scholar enrichment skipped: ${error}`);
+      }
+      if (isHostBlocked(S2_BATCH_URL) || /429/.test(String(error))) {
+        break;
       }
     }
   }

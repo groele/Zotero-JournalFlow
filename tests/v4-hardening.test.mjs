@@ -365,3 +365,72 @@ test('DailyFeedCacheStore creates daily incremental caches and cleans expired en
     Date.now = origDateNow;
   }
 });
+
+test('DailyFeedCacheStore evicts oldest non-today entries when exceeding byte cap and S2 stops on 429', async () => {
+  const mem = createMemoryIOUtils();
+  const cacheMod = loadTsModule('src/services/cache.ts', {
+    Zotero: { DataDirectory: { dir: 'Z:/mock' }, debug: () => {} },
+    IOUtils: mem.IOUtils,
+    PathUtils: mem.PathUtils,
+  });
+  const store = new cacheMod.DailyFeedCacheStore();
+  const doc = {
+    schema: 'daily-feed-v2',
+    day: '2026-11-13',
+    lastWeeklyCleanupTime: Date.now(),
+    entries: {
+      'old-1': { issn: '0001-0001', day: '2026-11-10', time: 1000, articles: [{ doi: '10.1/a', title: 'x'.repeat(200) }] },
+      'today-1': { issn: '0002-0002', day: '2026-11-13', time: 2000, articles: [{ doi: '10.1/b', title: 'Today' }] },
+    },
+  };
+  const raw = store.evictOldestToFit(doc, 320);
+  assert.ok(raw.length <= 320);
+  assert.equal(doc.entries['old-1'], undefined);
+  assert.ok(doc.entries['today-1']);
+
+  let s2Calls = 0;
+  const s2Mod = loadTsModule('src/services/semanticScholar.ts', {
+    Zotero: {
+      debug: () => {},
+      HTTP: {
+        request: async () => {
+          s2Calls += 1;
+          const err = new Error('Too Many Requests');
+          err.status = 429;
+          throw err;
+        },
+      },
+    },
+  });
+  const manyArticles = Array.from({ length: 85 }, (_, i) => ({
+    doi: `10.1000/s2-${i}`,
+    title: `Paper ${i}`,
+    abstract: '',
+    isOpenAccess: false,
+    fullTextLinks: [],
+  }));
+  await s2Mod.enrichWithSemanticScholar(manyArticles);
+  // 429 triggers host block on first batch (with 1 retry -> 2 calls), then aborts remaining batches
+  assert.equal(s2Calls, 2);
+});
+
+test('translateText chunks long abstracts when using Zotero PDF Translate', async () => {
+  const calls = [];
+  const txMod = loadTsModule('src/services/translation.ts', {
+    Zotero: {
+      PDFTranslate: {
+        api: {
+          translate: async (chunk) => {
+            calls.push(chunk.length);
+            return '这是中文翻译片段。';
+          },
+        },
+      },
+    },
+  });
+  const longAbstract = 'This is a scientific sentence about quantum materials. '.repeat(45);
+  assert.ok(longAbstract.length > 1800);
+  const res = await txMod.translateText(longAbstract, 'zh', 'pdftranslate');
+  assert.ok(calls.length >= 2);
+  assert.match(res, /这是中文翻译片段/);
+});
