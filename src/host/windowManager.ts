@@ -93,7 +93,6 @@ export class WindowHostManager {
     const { signal } = controller;
 
     injectHostStyles(doc);
-    this.ensureMenuItem(win, doc, signal);
     this.ensureToolbarButton(win, doc, signal, 0);
 
     win.addEventListener(
@@ -120,22 +119,6 @@ export class WindowHostManager {
       try {
         doc.getElementById(id)?.remove();
       } catch {}
-    }
-  }
-
-  private ensureMenuItem(win: any, doc: any, signal: AbortSignal): void {
-    if (doc.getElementById(MENU_ID)) return;
-    const menuitem = doc.createXULElement
-      ? doc.createXULElement('menuitem')
-      : doc.createElement('menuitem');
-    menuitem.id = MENU_ID;
-    menuitem.setAttribute('class', 'menuitem-iconic');
-    menuitem.setAttribute('image', `${CHROME_ROOT}icons/toolbar.svg`);
-    menuitem.setAttribute('label', this.service.getString('menuitem'));
-    menuitem.addEventListener('command', () => this.triggerOpen(win), { signal });
-    const toolsPopup = doc.getElementById('menu_ToolsPopup');
-    if (toolsPopup) {
-      toolsPopup.appendChild(menuitem);
     }
   }
 
@@ -267,10 +250,6 @@ export class WindowHostManager {
   relabelWindow(win: any): void {
     const doc = win?.document;
     if (!doc) return;
-    const mi = doc.getElementById(MENU_ID);
-    if (mi) {
-      mi.setAttribute('label', this.service.getString('menuitem'));
-    }
     const tb = doc.getElementById(TOOLBAR_BTN_ID);
     if (tb) {
       tb.setAttribute('tooltiptext', this.service.getString('toolbar-tip'));

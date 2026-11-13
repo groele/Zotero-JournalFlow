@@ -284,7 +284,7 @@ test('WindowHostManager injects toolbar icon into zotero-items-toolbar (not zote
   assert.equal(btn.parentNode, mainToolbar);
   assert.equal(btn.previousElementSibling.id, 'zotero-tb-note-add');
   assert.equal(btn.nextElementSibling.tagName.toLowerCase(), 'toolbarspring');
-  assert.ok(doc.getElementById('journalflow-menuitem'));
+  assert.equal(doc.getElementById('journalflow-menuitem'), null);
   assert.equal(doc.getElementById('journalflow-host-style')?.namespaceURI, 'http://www.w3.org/1999/xhtml');
 
   btn.click();
