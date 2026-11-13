@@ -43,6 +43,7 @@ export interface FeedViewState {
   filterMode: ArticleFilterMode;
   sortMode: ArticleSortMode;
   focusedArticleKey: string | null;
+  expandedAbstractKeys: Set<string>;
   visibleLimit: number;
   loadGeneration: number;
   bulkTranslationRunning: boolean;
@@ -94,6 +95,7 @@ export function createFeedViewState(): FeedViewState {
     filterMode: 'all',
     sortMode: 'newest',
     focusedArticleKey: null,
+    expandedAbstractKeys: new Set<string>(),
     visibleLimit: 40,
     loadGeneration: 0,
     bulkTranslationRunning: false,

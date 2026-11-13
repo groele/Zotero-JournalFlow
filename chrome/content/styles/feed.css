@@ -989,6 +989,13 @@ button:disabled {
 	transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
 }
 
+#article-search-input::-webkit-search-cancel-button,
+#article-search-input::-moz-search-clear-button {
+	-webkit-appearance: none;
+	appearance: none;
+	display: none;
+}
+
 #article-search-clear {
 	position: absolute;
 	right: 6px;
@@ -1156,6 +1163,10 @@ mark.article-match {
 	border-color: var(--accent);
 	color: var(--accent);
 	background: var(--accent-soft);
+}
+
+#cards {
+	padding-bottom: 56px;
 }
 
 #cards.is-soft-refreshing {

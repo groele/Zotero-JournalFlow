@@ -220,20 +220,30 @@ export async function getExistingLibraryDOIs(dois: string[]): Promise<Record<str
     const fieldID = Zotero.ItemFields?.getID?.('DOI');
     const libraryID = Zotero.Libraries?.userLibraryID || 1;
     if (!fieldID) return result;
-    const rows: Array<{ itemID: number; value: string }> = await Zotero.DB.queryAsync(
-      `SELECT id.itemID, idv.value
-       FROM itemData id
-       JOIN itemDataValues idv ON id.valueID = idv.valueID
-       JOIN items i ON i.itemID = id.itemID
-       LEFT JOIN deletedItems di ON di.itemID = id.itemID
-       WHERE id.fieldID = ? AND i.libraryID = ? AND di.itemID IS NULL`,
-      [fieldID, libraryID]
-    );
     const wanted = new Set(normalized);
-    for (const row of rows || []) {
-      const key = normalizeDOI(row.value);
-      if (key && wanted.has(key) && !result[key]) {
-        result[key] = Number(row.itemID);
+    for (let i = 0; i < normalized.length; i += 80) {
+      const chunk = normalized.slice(i, i + 80);
+      const variants = chunk.flatMap((d) => [
+        d,
+        `https://doi.org/${d}`,
+        `http://doi.org/${d}`,
+        `https://dx.doi.org/${d}`,
+      ]);
+      const placeholders = variants.map(() => '?').join(', ');
+      const rows: Array<{ itemID: number; value: string }> = await Zotero.DB.queryAsync(
+        `SELECT id.itemID, idv.value
+         FROM itemData id
+         JOIN itemDataValues idv ON id.valueID = idv.valueID
+         JOIN items i ON i.itemID = id.itemID
+         LEFT JOIN deletedItems di ON di.itemID = id.itemID
+         WHERE id.fieldID = ? AND i.libraryID = ? AND di.itemID IS NULL AND LOWER(idv.value) IN (${placeholders})`,
+        [fieldID, libraryID, ...variants]
+      );
+      for (const row of rows || []) {
+        const key = normalizeDOI(row.value);
+        if (key && wanted.has(key) && !result[key]) {
+          result[key] = Number(row.itemID);
+        }
       }
     }
   } catch (error) {

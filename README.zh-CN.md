@@ -1,8 +1,15 @@
-# Zotero JournalFlow `v3.0.0`
+# Zotero JournalFlow `v4.0.0`
 
 **Zotero JournalFlow** 是一款专为 **Zotero 10–12**（`Gecko 140+ / 153+`）打造的现代化学术期刊订阅与文献发现插件，基于开源项目 [Lyz-623/JournalLens (`v0.3.9`)](https://github.com/Lyz-623/JournalLens) 按照 **Zotero Flow** 套件工程架构、视觉规范与质量标准全面重构。
 
 ---
+
+## `v4.0.0` 大版本工程强化与性能升级
+
+- **SQLite 批量文库 DOI 查重**：将全库遍历替换为按 80 条分批的 `Zotero.DB.queryAsync` `IN (...)` 参数化查询（兼容裸 DOI 与 `doi.org`/`dx.doi.org` 链接变体），大型文库不再卡顿。
+- **合并落盘与缓存译文即时检索**：新增 `ReadingStateStore.setReadMany()` 将“全部标为已读”合并为单次磁盘写入；`stampReadingState()` 同步预水合 `_tx` 缓存译文，加载后即可直接检索已翻译内容。
+- **图片加载并发去重与域名冷却自动恢复**：同一文献并发触发图片抓取时自动复用进行中任务；图片 CDN 超时黑名单升级为 5 分钟自动过期冷却，避免偶发网络波动后永久无法加载。
+- **阅读现场保护与作用域精准批量操作**：后台元数据补全在默认视图下不再重置已展开的摘要；排序方式支持 `sessionStorage` 持久化；**全部翻译**精准限定当前筛选与搜索结果并支持切换作用域时自动中止；快捷键移除卡片前自动顺移焦点；导入 JSON 订阅后自动补全缺失出版社与关联 ISSN。
 
 ## `v3.0.0` 大版本升级亮点
 
@@ -31,7 +38,7 @@
 | 项目 | 规范说明 |
 |---|---|
 | **插件 ID** | `journalflow@groele.org` |
-| **当前版本** | `v3.0.0` |
+| **当前版本** | `v4.0.0` |
 | **宿主兼容** | Zotero `10.0` – `12.*`（`Gecko 140+ / 153+`） |
 | **构建体系** | TypeScript (`ES2023`, `strict`) + `esbuild` (`firefox140` IIFE，禁混淆保留可读堆栈) |
 | **代码规范** | `src/` 全量 TypeScript、单文件严格 `<= 360` 行、Fluent `en-US` / `zh-CN` 键值严格对称 |
@@ -44,7 +51,7 @@
 ```bash
 npm install
 npm run test      # 静态类型检查 + 架构守卫 + esbuild 打包 + 单元测试 + XPI 确定性自检
-npm run package   # 输出 dist/zotero-journalflow-3.0.0.xpi 并自动回写 update.json SHA-512 校验
+npm run package   # 输出 dist/zotero-journalflow-4.0.0.xpi 并自动回写 update.json SHA-512 校验
 ```
 
 ---

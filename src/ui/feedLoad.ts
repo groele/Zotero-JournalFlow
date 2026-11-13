@@ -6,6 +6,7 @@ import { renderAbstractBlock, updateBatchBar } from './cardActions';
 import { updateBulkTranslateButton } from './cardTranslation';
 import { getCardBindings, renderArticles, renderSkeletonCards } from './cardsRender';
 import { type FeedHostContext, type FeedUIState, clearNotice, getString } from './feedState';
+import { updateFeedToolbar } from './feedToolbar';
 
 export interface LoadFeedOptions {
   force?: boolean;
@@ -104,7 +105,15 @@ function runBackgroundEnrichment(doc: Document, ctx: FeedHostContext, state: Fee
       patchMetadataCard(doc, ctx, state, updated);
     })
     .then(() => {
-      if (gen === state.loadGeneration) renderArticles(doc, ctx, state);
+      if (gen === state.loadGeneration) {
+        const needsRerender =
+          state.filterMode === 'oa' ||
+          state.filterMode === 'abstract' ||
+          state.filterMode === 'figures' ||
+          state.sortMode === 'figures';
+        if (needsRerender) renderArticles(doc, ctx, state);
+        else updateFeedToolbar(doc, ctx, state);
+      }
       kickAbstracts();
     })
     .catch(() => kickAbstracts());

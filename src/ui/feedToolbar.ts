@@ -1,7 +1,13 @@
+import { articleMatchesFilterMode } from '../services/filtering';
 import type { ArticleFilterMode, ArticleSortMode, JournalArticle } from '../types';
 import { type FeedHostContext, type FeedUIState, getString, showNotice } from './feedState';
 import { articleMatchesSearch } from './cardTranslation';
 import { publisherDisplayName } from './sidebarTree';
+
+export { articleMatchesFilterMode };
+
+const SORT_STORAGE_KEY = 'journalflow.sortMode';
+const VALID_SORT_MODES = new Set<ArticleSortMode>(['newest', 'unread', 'figures', 'journal', 'title']);
 
 export interface ArticleFilterCounts {
   all: number;
@@ -10,23 +16,6 @@ export interface ArticleFilterCounts {
   figures: number;
   unread: number;
   starred: number;
-}
-
-export function articleMatchesFilterMode(article: JournalArticle, mode: ArticleFilterMode): boolean {
-  switch (mode) {
-    case 'oa':
-      return Boolean(article.isOpenAccess);
-    case 'abstract':
-      return Boolean(article.abstract);
-    case 'figures':
-      return Boolean(article.figures?.length);
-    case 'unread':
-      return !article._read;
-    case 'starred':
-      return Boolean(article._starred);
-    default:
-      return true;
-  }
 }
 
 export function sortArticles(articles: JournalArticle[], mode: ArticleSortMode): JournalArticle[] {
@@ -172,11 +161,26 @@ export function initFeedToolbar(
   rerender: () => void
 ): void {
   const S = (id: string) => getString(ctx, id);
+  try {
+    const savedSort = doc.defaultView?.sessionStorage?.getItem(SORT_STORAGE_KEY) as ArticleSortMode | null;
+    if (savedSort && VALID_SORT_MODES.has(savedSort)) {
+      state.sortMode = savedSort;
+    }
+  } catch {}
+  const saveSortMode = (mode: ArticleSortMode) => {
+    try {
+      doc.defaultView?.sessionStorage?.setItem(SORT_STORAGE_KEY, mode);
+    } catch {}
+  };
   const sortSelect = doc.getElementById('article-sort-select') as HTMLSelectElement | null;
+  if (sortSelect && sortSelect.value !== state.sortMode) {
+    sortSelect.value = state.sortMode;
+  }
   sortSelect?.addEventListener(
     'change',
     () => {
       state.sortMode = (sortSelect.value || 'newest') as ArticleSortMode;
+      saveSortMode(state.sortMode);
       state.visibleLimit = 40;
       rerender();
     },
@@ -204,6 +208,7 @@ export function initFeedToolbar(
       state.articleQuery = '';
       state.filterMode = 'all';
       state.sortMode = 'newest';
+      saveSortMode('newest');
       state.visibleLimit = 40;
       rerender();
     },
@@ -223,9 +228,13 @@ export function initFeedToolbar(
       for (const a of targets) {
         a._read = true;
       }
-      await Promise.all(
-        targets.map((a) => Promise.resolve(ctx.JournalFlow.setArticleRead?.(a, true)).catch(() => {}))
-      );
+      if (typeof ctx.JournalFlow.setArticlesRead === 'function') {
+        await Promise.resolve(ctx.JournalFlow.setArticlesRead(targets, true)).catch(() => {});
+      } else {
+        await Promise.all(
+          targets.map((a) => Promise.resolve(ctx.JournalFlow.setArticleRead?.(a, true)).catch(() => {}))
+        );
+      }
       rerender();
       const tpl = S('marked-scope-read');
       const msg = tpl !== 'marked-scope-read' ? tpl.replace('{count}', String(targets.length)) : `${targets.length}`;

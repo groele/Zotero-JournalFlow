@@ -1,3 +1,4 @@
+import { articleMatchesFilterMode } from '../services/filtering';
 import type { JournalArticle } from '../types';
 import { type FeedHostContext, type FeedUIState, getString, showNotice } from './feedState';
 
@@ -44,6 +45,15 @@ export function setHighlightedText(
   }
 }
 
+function getScopedTranslateTargets(state: FeedUIState): JournalArticle[] {
+  return state.articles.filter(
+    (a) =>
+      Boolean(a?.title) &&
+      articleMatchesFilterMode(a, state.filterMode) &&
+      articleMatchesSearch(a, state.articleQuery)
+  );
+}
+
 export function updateBulkTranslateButton(
   doc: Document,
   ctx: FeedHostContext,
@@ -51,7 +61,7 @@ export function updateBulkTranslateButton(
 ): void {
   const btn = doc.getElementById('translate-all-btn') as HTMLButtonElement | null;
   if (!btn) return;
-  const articles = state.articles.filter((a) => Boolean(a?.title));
+  const articles = getScopedTranslateTargets(state);
   btn.disabled = state.bulkTranslationRunning || !articles.length;
   if (state.bulkTranslationRunning) return;
   const allShown = articles.length > 0 && articles.every((a) => a._showTranslated);
@@ -186,7 +196,7 @@ export async function toggleTranslateAll(
   state: FeedUIState,
   rerender: () => void
 ): Promise<void> {
-  const articles = state.articles.filter((a) => Boolean(a?.title));
+  const articles = getScopedTranslateTargets(state);
   if (!articles.length || state.bulkTranslationRunning) return;
 
   if (articles.every((a) => a._showTranslated)) {
@@ -195,6 +205,7 @@ export async function toggleTranslateAll(
     return;
   }
 
+  const startGen = state.loadGeneration;
   const btn = doc.getElementById('translate-all-btn') as HTMLButtonElement | null;
   let done = 0;
   let failed = 0;
@@ -211,16 +222,18 @@ export async function toggleTranslateAll(
   rerender();
 
   const worker = async () => {
-    while (next < total) {
+    while (next < total && state.loadGeneration === startGen) {
       const article = articles[next++];
       try {
         await ensureTranslation(ctx, article);
+        if (state.loadGeneration !== startGen) break;
         article._showTranslated = true;
       } catch (e) {
         failed++;
         ctx.Zotero?.debug?.(`[JournalFlow] bulk translate failed: ${e}`);
       }
       done++;
+      if (state.loadGeneration !== startGen) break;
       if (btn) {
         btn.textContent = getString(ctx, 'translating-all')
           .replace('{done}', String(done))
@@ -236,14 +249,18 @@ export async function toggleTranslateAll(
     await Promise.all(Array.from({ length: concurrency }, () => worker()));
   } finally {
     state.bulkTranslationRunning = false;
-    rerender();
-    if (failed) {
-      showNotice(
-        doc,
-        state,
-        getString(ctx, 'translate-all-failed').replace('{count}', String(failed)),
-        'warn'
-      );
+    if (state.loadGeneration === startGen) {
+      rerender();
+      if (failed) {
+        showNotice(
+          doc,
+          state,
+          getString(ctx, 'translate-all-failed').replace('{count}', String(failed)),
+          'warn'
+        );
+      }
+    } else {
+      updateBulkTranslateButton(doc, ctx, state);
     }
   }
 }

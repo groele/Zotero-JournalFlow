@@ -1,6 +1,6 @@
 {
   "name": "zotero-journalflow",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Follow academic journals inside Zotero: browse recent papers, search title/abstract, recover missing abstracts, validate figures, translate, and import by DOI. Part of Zotero Flow.",
   "private": true,
   "type": "module",

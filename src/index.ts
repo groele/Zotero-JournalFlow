@@ -175,6 +175,9 @@ export class JournalFlowHost implements JournalFlowService {
   importSubscriptionsJSON(raw: string): JournalSubscription[] {
     const { next } = mergeSubscriptions(this.getJournals(), parseSubscriptionsImport(raw));
     this.saveJournals(next);
+    if (next.some((j) => !j.publisher || !j.altIssns?.length)) {
+      void this.backfillSubscriptionsMetadata().catch(() => {});
+    }
     return next;
   }
 
@@ -277,6 +280,13 @@ export class JournalFlowHost implements JournalFlowService {
 
   setArticleRead(article: Pick<JournalArticle, 'doi' | 'title'>, value: boolean): Promise<void> {
     return this.readingState.setRead(articleStateKey(article.doi, article.title), value);
+  }
+
+  setArticlesRead(articles: Array<Pick<JournalArticle, 'doi' | 'title'>>, value: boolean): Promise<void> {
+    return this.readingState.setReadMany(
+      articles.map((a) => articleStateKey(a.doi, a.title)).filter(Boolean),
+      value
+    );
   }
 
   isArticleStarred(article: Pick<JournalArticle, 'doi' | 'title'>): boolean {

@@ -4,7 +4,7 @@ import { parseFluentFeedMessages } from './i18n/fluent';
 import type { UILanguage } from './types';
 
 export const ADDON_ID = 'journalflow@groele.org';
-export const ADDON_VERSION = '3.0.0';
+export const ADDON_VERSION = '4.0.0';
 export const CHROME_ROOT = 'chrome://journalflow/content/';
 export const PREF_BRANCH = 'extensions.journalflow.';
 export const LEGACY_PREF_BRANCH = 'extensions.journallens.';

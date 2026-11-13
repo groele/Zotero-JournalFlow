@@ -92,6 +92,30 @@ export class ReadingStateStore {
     await this.persist();
   }
 
+  async setReadMany(keys: string[], value: boolean): Promise<void> {
+    const valid = keys.filter(Boolean);
+    if (!valid.length) return;
+    await this.ensureLoaded();
+    let changed = false;
+    for (const key of valid) {
+      const had = this.readSet.has(key);
+      if (value && !had) {
+        this.readSet.add(key);
+        changed = true;
+      } else if (!value && had) {
+        this.readSet.delete(key);
+        changed = true;
+      }
+    }
+    if (changed) await this.persist();
+  }
+
+  getTranslations(key: string): Partial<Record<UILanguage, ArticleTranslation>> | undefined {
+    if (!key) return undefined;
+    const entry = this.translations.get(key);
+    return entry ? { ...entry } : undefined;
+  }
+
   isStarred(key: string): boolean {
     return Boolean(key && this.starredSet.has(key));
   }

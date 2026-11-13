@@ -20,7 +20,30 @@ export interface CardElement extends HTMLDivElement {
 
 const figureFetchGate = createSemaphore(4);
 const sourceSigByArticle = new WeakMap<JournalArticle, string>();
-const hostTimeouts = new Map<string, number>();
+const inFlightByArticle = new WeakMap<JournalArticle, Promise<void>>();
+const HOST_COOLDOWN_MS = 5 * 60 * 1000;
+const hostTimeouts = new Map<string, { count: number; blockedUntil: number }>();
+
+export function isImageHostCoolingDown(host: string, now = Date.now()): boolean {
+  if (!host) return false;
+  const entry = hostTimeouts.get(host);
+  if (!entry) return false;
+  if (entry.blockedUntil && now >= entry.blockedUntil) {
+    hostTimeouts.delete(host);
+    return false;
+  }
+  return entry.count >= 3;
+}
+
+export function recordImageHostTimeout(host: string, now = Date.now()): void {
+  if (!host) return;
+  const prev = hostTimeouts.get(host);
+  const count = (prev?.count || 0) + 1;
+  hostTimeouts.set(host, {
+    count,
+    blockedUntil: count >= 3 ? now + HOST_COOLDOWN_MS : 0,
+  });
+}
 
 function visualSourceSignature(article: JournalArticle): string {
   return [article.pmcid || '', article.url || '', ...(article.fullTextLinks || [])].join('|');
@@ -71,7 +94,7 @@ function probeImageURL(
       return;
     }
     const host = hostKeyOf(url);
-    if (host && (hostTimeouts.get(host) || 0) >= 3) {
+    if (isImageHostCoolingDown(host)) {
       resolve(null);
       return;
     }
@@ -89,7 +112,7 @@ function probeImageURL(
       resolve(result);
     };
     const timer = setTimeout(() => {
-      if (host) hostTimeouts.set(host, (hostTimeouts.get(host) || 0) + 1);
+      recordImageHostTimeout(host);
       finish({ url, width: 0, height: 0, timedOut: true });
     }, timeout);
     img.onload = () => {
@@ -241,15 +264,16 @@ export async function loadFiguresForCard(
   loading.textContent = getString(ctx, 'figures-loading');
   container.appendChild(loading);
 
-  await figureFetchGate.run(async () => {
-    if (!card.isConnected) return;
-    try {
-      const currentSig = visualSourceSignature(article);
-      if (article.figures !== null && article.figures.length === 0 && sourceSigByArticle.get(article) !== currentSig) {
-        article.figures = null;
-      }
-      if (article.figures === null) {
-        sourceSigByArticle.set(article, currentSig);
+  const currentSig = visualSourceSignature(article);
+  if (article.figures !== null && article.figures.length === 0 && sourceSigByArticle.get(article) !== currentSig) {
+    article.figures = null;
+  }
+
+  let fetchTask = inFlightByArticle.get(article);
+  if (!fetchTask && article.figures === null) {
+    sourceSigByArticle.set(article, currentSig);
+    fetchTask = figureFetchGate.run(async () => {
+      try {
         let allFigures: ArticleFigure[] = [];
         if (article.pmcid) {
           try {
@@ -280,32 +304,40 @@ export async function loadFiguresForCard(
         for (const fig of allFigures) {
           addFigure(combined, seen, fig);
         }
-        article.figures = combined;
+        article.figures = await validateFigures(combined, 10);
         article.graphicalAbstract = null;
+      } catch (e) {
+        ctx.Zotero?.debug?.(`[JournalFlow] figures failed for ${article.doi || article.url}: ${e}`);
+        article.figures = [];
+      } finally {
+        inFlightByArticle.delete(article);
       }
-    } catch (e) {
-      ctx.Zotero?.debug?.(`[JournalFlow] figures failed for ${article.doi || article.url}: ${e}`);
-      article.figures = [];
-    }
+    });
+    inFlightByArticle.set(article, fetchTask);
+  }
 
-    container.replaceChildren();
-    article.figures = await validateFigures(article.figures || [], 10);
-    if (!article.figures.length) {
-      container.hidden = true;
-      return;
-    }
+  if (fetchTask) await fetchTask;
+  else if (article.figures?.length) {
+    article.figures = await validateFigures(article.figures, 10);
+  }
 
-    for (const [index, figure] of article.figures.slice(0, 10).entries()) {
-      const item = doc.createElement('div');
-      item.className = 'figure-item';
-      setImageWithFallback(doc, item, figure);
-      const label = doc.createElement('span');
-      label.className = 'fig-label';
-      label.textContent = figure.label || '';
-      label.title = figure.caption;
-      item.appendChild(label);
-      item.addEventListener('click', () => onOpenLightbox(article.figures || [], index));
-      container.appendChild(item);
-    }
-  });
+  if (!card.isConnected) return;
+  container.replaceChildren();
+  if (!article.figures?.length) {
+    container.hidden = true;
+    return;
+  }
+
+  for (const [index, figure] of article.figures.slice(0, 10).entries()) {
+    const item = doc.createElement('div');
+    item.className = 'figure-item';
+    setImageWithFallback(doc, item, figure);
+    const label = doc.createElement('span');
+    label.className = 'fig-label';
+    label.textContent = figure.label || '';
+    label.title = figure.caption;
+    item.appendChild(label);
+    item.addEventListener('click', () => onOpenLightbox(article.figures || [], index));
+    container.appendChild(item);
+  }
 }

@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Zotero JournalFlow",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "description": "Follow academic journals inside Zotero: browse recent papers, search title/abstract, recover missing abstracts, validate figures, translate, and import by DOI.",
   "homepage_url": "https://github.com/groele/Zotero-JournalFlow",
   "author": "groele",

@@ -61,6 +61,15 @@ export function syncFocusedCardClass(doc: Document, state: FeedUIState): HTMLEle
   return active;
 }
 
+export function advanceFocusBeforeRemoval(doc: Document, state: FeedUIState, removedKey: string): void {
+  if (!state.focusedArticleKey || state.focusedArticleKey !== removedKey) return;
+  const cards = getVisibleCards(doc);
+  const idx = cards.findIndex((c) => c.dataset.selKey === removedKey);
+  if (idx < 0) return;
+  const nextCard = cards[idx + 1] || cards[idx - 1] || null;
+  state.focusedArticleKey = nextCard?.dataset.selKey || null;
+}
+
 function moveCardFocus(doc: Document, state: FeedUIState, delta: 1 | -1): void {
   const cards = getVisibleCards(doc);
   if (!cards.length) return;

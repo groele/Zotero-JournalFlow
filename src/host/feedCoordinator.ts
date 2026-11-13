@@ -42,6 +42,10 @@ export class FeedCoordinator {
       if (!key) continue;
       article._read = this.readingState.isRead(key);
       article._starred = this.readingState.isStarred(key);
+      const cachedTx = this.readingState.getTranslations(key);
+      if (cachedTx && Object.keys(cachedTx).length) {
+        article._tx = { ...(article._tx || {}), ...cachedTx };
+      }
     }
     return articles;
   }

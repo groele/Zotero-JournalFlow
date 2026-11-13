@@ -169,6 +169,7 @@ export interface JournalFlowFeedService {
   fetchArticleHTML(url: string): Promise<{ text: string; url: string }>;
   isArticleRead(article: Pick<JournalArticle, 'doi' | 'title'>): boolean;
   setArticleRead(article: Pick<JournalArticle, 'doi' | 'title'>, value: boolean): Promise<void>;
+  setArticlesRead?(articles: Array<Pick<JournalArticle, 'doi' | 'title'>>, value: boolean): Promise<void>;
   isArticleStarred(article: Pick<JournalArticle, 'doi' | 'title'>): boolean;
   toggleArticleStarred(article: Pick<JournalArticle, 'doi' | 'title'>): Promise<boolean>;
 }

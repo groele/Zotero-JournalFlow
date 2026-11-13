@@ -1,6 +1,23 @@
 import { PUBTYPE_BLOCK, TITLE_BLOCK_RE } from '../config';
-import type { JournalArticle } from '../types';
+import type { ArticleFilterMode, JournalArticle } from '../types';
 import { articleDateValue, dateDaysAgo } from './crossref';
+
+export function articleMatchesFilterMode(article: JournalArticle, mode: ArticleFilterMode): boolean {
+  switch (mode) {
+    case 'oa':
+      return Boolean(article.isOpenAccess);
+    case 'abstract':
+      return Boolean(article.abstract);
+    case 'figures':
+      return Boolean(article.figures?.length);
+    case 'unread':
+      return !article._read;
+    case 'starred':
+      return Boolean(article._starred);
+    default:
+      return true;
+  }
+}
 
 export function isBlockedType(article: Pick<JournalArticle, 'pubTypes' | 'title'>): boolean {
   if (article.pubTypes && article.pubTypes.length) {

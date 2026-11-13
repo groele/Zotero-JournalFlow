@@ -5,6 +5,7 @@ import { copyPlainText, formatArticleBibTeX } from './citation';
 import { type FeedHostContext, type FeedUIState, getString, populateCollectionSelector, showNotice } from './feedState';
 import { updateFeedToolbar } from './feedToolbar';
 import type { CardElement } from './figureStrip';
+import { advanceFocusBeforeRemoval } from './keyboardNav';
 
 export interface CardActionRefs {
   card: CardElement;
@@ -97,17 +98,21 @@ export function renderAbstractBlock(
     updateArticleText(doc, ctx, state, article, titleEl, null, translateBtn);
     return null;
   }
+  const selKey = articleSelectionKey(article);
+  const isExpanded = state.expandedAbstractKeys.has(selKey);
   const abstractEl = doc.createElement('p');
-  abstractEl.className = 'card-abstract clamped';
+  abstractEl.className = isExpanded ? 'card-abstract' : 'card-abstract clamped';
   abstractWrap.appendChild(abstractEl);
 
   const S = (id: string) => getString(ctx, id);
   const toggle = doc.createElement('button');
   toggle.type = 'button';
   toggle.className = 'abstract-toggle';
-  toggle.textContent = S('show-more');
+  toggle.textContent = S(isExpanded ? 'show-less' : 'show-more');
   toggle.addEventListener('click', () => {
     const clamped = abstractEl.classList.toggle('clamped');
+    if (clamped) state.expandedAbstractKeys.delete(selKey);
+    else state.expandedAbstractKeys.add(selKey);
     toggle.textContent = S(clamped ? 'show-more' : 'show-less');
   });
   abstractWrap.appendChild(toggle);
@@ -256,7 +261,10 @@ export function buildCardActions(
     starBtn.classList.toggle('starred', next);
     starBtn.textContent = S(next ? 'starred' : 'star');
     updateFeedToolbar(doc, ctx, state);
-    if (state.filterMode === 'starred' && !next) refs.rerender();
+    if (state.filterMode === 'starred' && !next) {
+      advanceFocusBeforeRemoval(doc, state, articleSelectionKey(article));
+      refs.rerender();
+    }
   });
   actions.appendChild(starBtn);
 
@@ -267,7 +275,10 @@ export function buildCardActions(
   readBtn.addEventListener('click', () => {
     const next = !article._read;
     markRead(next);
-    if (state.filterMode === 'unread' && next) refs.rerender();
+    if (state.filterMode === 'unread' && next) {
+      advanceFocusBeforeRemoval(doc, state, articleSelectionKey(article));
+      refs.rerender();
+    }
   });
   actions.appendChild(readBtn);
 
